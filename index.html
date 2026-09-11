@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Сборник Псалмов</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    :root {
+      --bg-color: var(--tg-theme-bg-color, #121212);
+      --text-color: var(--tg-theme-text-color, #ffffff);
+      --card-bg: var(--tg-theme-secondary-bg-color, #1e1e1e);
+      --accent-color: var(--tg-theme-button-color, #2481cc);
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      margin: 0;
+      padding: 16px;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .header h2 {
+      margin: 0;
+      font-size: 20px;
+    }
+
+    .lang-btn {
+      background: var(--card-bg);
+      border: 1px solid var(--accent-color);
+      color: var(--text-color);
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .search-box {
+      width: 100%;
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.1);
+      background: var(--card-bg);
+      color: var(--text-color);
+      box-sizing: border-box;
+      margin-bottom: 16px;
+      font-size: 15px;
+      outline: none;
+    }
+
+    .books-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .book-card {
+      background: var(--card-bg);
+      padding: 18px 12px;
+      border-radius: 12px;
+      text-align: center;
+      font-weight: 600;
+      font-size: 14px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+      cursor: pointer;
+      border: 1px solid rgba(255,255,255,0.05);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <h2 id="appTitle">📖 Псалмы</h2>
+    <button id="langToggle" class="lang-btn" onclick="toggleLanguage()">🇺🇦 UA</button>
+  </div>
+
+  <input type="text" id="searchInput" class="search-box" placeholder="Поиск по номеру или тексту...">
+
+  <div class="books-grid" id="booksGrid"></div>
+
+  <script>
+    const tg = window.Telegram.WebApp;
+    tg.expand();
+
+    let currentLang = 'ru';
+
+    const booksRu = ["Псалмы Сиона", "Песни Юности", "Горлица", "Мы поём Господу", "Голосок хваления", "Мелодия юных сердец"];
+    const booksUa = ["Псалми Сіону", "Пісні Юності", "Горлиця", "Ми співаємо Господу", "Голосок хваління", "Мелодія юних сердець"];
+
+    function toggleLanguage() {
+      currentLang = currentLang === 'ru' ? 'ua' : 'ru';
+      document.getElementById('langToggle').innerText = currentLang === 'ru' ? '🇺🇦 UA' : '🇷🇺 RU';
+      document.getElementById('searchInput').placeholder = currentLang === 'ru' ? 'Поиск по номеру или тексту...' : 'Пошук за номером або текстом...';
+      renderBooks();
+    }
+
+    function renderBooks() {
+      const books = currentLang === 'ru' ? booksRu : booksUa;
+      const grid = document.getElementById('booksGrid');
+      grid.innerHTML = books.map(book => `<div class="book-card">${book}</div>`).join('');
+    }
+
+    renderBooks();
+  </script>
+</body>
+</html>
