@@ -3,338 +3,616 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>Сборник Псалмов</title>
+  <title>Библиотека Псалмов</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
     :root {
-      --bg-color: var(--tg-theme-bg-color, #17212b);
-      --text-color: var(--tg-theme-text-color, #ffffff);
-      --card-bg: var(--tg-theme-secondary-bg-color, #232e3c);
-      --accent-color: var(--tg-theme-button-color, #5288c1);
-      --accent-text: var(--tg-theme-button-text-color, #ffffff);
-      --hint-color: var(--tg-theme-hint-color, #7f91a4);
+      --bg-color: #0e1621;
+      --card-bg: #17212b;
+      --accent-gold: #e5b869;
+      --accent-blue: #3390ec;
+      --text-main: #f5f5f7;
+      --text-sub: #7f91a4;
+      --shadow-color: rgba(0, 0, 0, 0.4);
+      --font-size-text: 17px;
     }
 
-    * { box-sizing: border-box; }
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
       background-color: var(--bg-color);
-      color: var(--text-color);
+      color: var(--text-main);
       margin: 0;
-      padding: 14px;
+      padding: 16px;
       min-height: 100vh;
+      user-select: none;
     }
 
-    .header {
+    /* Шапка приложения */
+    .top-bar {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 14px;
-      gap: 10px;
+      margin-bottom: 16px;
     }
 
-    .header-left {
+    .app-title-container {
       display: flex;
       align-items: center;
       gap: 10px;
     }
 
-    .back-btn {
-      display: none;
-      background: var(--card-bg);
-      border: 1px solid rgba(255,255,255,0.2);
-      color: var(--text-color);
-      padding: 6px 12px;
-      border-radius: 8px;
-      font-size: 14px;
-      cursor: pointer;
-    }
-
-    .header h2 {
+    .app-title {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
       margin: 0;
-      font-size: 18px;
+      background: linear-gradient(135deg, #ffffff 0%, #b0c4de 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
     }
 
-    .lang-btn {
-      background: var(--accent-color);
-      color: var(--accent-text);
-      border: none;
-      padding: 6px 14px;
-      border-radius: 8px;
-      font-weight: bold;
-      cursor: pointer;
-      font-size: 13px;
-    }
-
-    .search-box {
-      width: 100%;
-      padding: 12px;
-      border-radius: 10px;
-      border: 1px solid rgba(255,255,255,0.15);
+    .lang-switcher {
       background: var(--card-bg);
-      color: var(--text-color);
-      margin-bottom: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: var(--accent-gold);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-weight: 700;
+      font-size: 13px;
+      cursor: pointer;
+      box-shadow: 0 2px 8px var(--shadow-color);
+      transition: all 0.2s ease;
+    }
+
+    .lang-switcher:active {
+      transform: scale(0.95);
+    }
+
+    /* Поисковая строка */
+    .search-wrapper {
+      position: relative;
+      margin-bottom: 20px;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 14px 16px 14px 44px;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: var(--card-bg);
+      color: var(--text-main);
       font-size: 15px;
       outline: none;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
     }
 
+    .search-icon {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 18px;
+      opacity: 0.5;
+    }
+
+    /* Сетка Книг (Дизайн в форме обложек) */
     .books-grid {
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
     }
 
-    .book-card {
-      background: var(--card-bg);
-      padding: 18px 10px;
-      border-radius: 12px;
-      text-align: center;
-      font-weight: 600;
-      font-size: 14px;
+    .book-cover {
+      position: relative;
+      aspect-ratio: 1 / 1.35;
+      border-radius: 12px 16px 16px 12px;
+      padding: 16px 12px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
       cursor: pointer;
-      border: 1px solid rgba(255,255,255,0.15);
-      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      box-shadow: -4px 6px 16px var(--shadow-color), inset -2px 0 5px rgba(255,255,255,0.1);
+      border-left: 6px solid rgba(0, 0, 0, 0.35);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      overflow: hidden;
     }
 
-    .book-card:active {
-      background: var(--accent-color);
-      color: var(--accent-text);
+    .book-cover::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(0,0,0,0.3) 100%);
+      pointer-events: none;
     }
 
+    .book-cover:active {
+      transform: scale(0.97);
+    }
+
+    /* Градиенты для обложек */
+    .bg-book-0 { background: linear-gradient(145deg, #2c3e50, #1a252f); border-left-color: #e5b869; }
+    .bg-book-1 { background: linear-gradient(145deg, #1e3c72, #2a5298); border-left-color: #4a90e2; }
+    .bg-book-2 { background: linear-gradient(145deg, #4a154b, #2b092b); border-left-color: #e056fd; }
+    .bg-book-3 { background: linear-gradient(145deg, #11998e, #38ef7d); border-left-color: #ffffff; }
+    .bg-book-4 { background: linear-gradient(145deg, #d35400, #e67e22); border-left-color: #f1c40f; }
+    .bg-book-5 { background: linear-gradient(145deg, #8e44ad, #9b59b6); border-left-color: #f39c12; }
+
+    .book-title {
+      font-size: 16px;
+      font-weight: 700;
+      line-height: 1.3;
+      z-index: 1;
+      color: #ffffff;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.6);
+    }
+
+    .book-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 1;
+      font-size: 12px;
+      opacity: 0.9;
+    }
+
+    .book-badge {
+      background: rgba(0, 0, 0, 0.4);
+      padding: 3px 8px;
+      border-radius: 10px;
+      font-size: 11px;
+      backdrop-filter: blur(4px);
+    }
+
+    /* Список Песен */
     .song-list {
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 10px;
     }
 
-    .song-item {
+    .song-card {
       background: var(--card-bg);
-      padding: 12px 14px;
-      border-radius: 10px;
-      cursor: pointer;
-      border: 1px solid rgba(255,255,255,0.08);
+      padding: 14px 16px;
+      border-radius: 12px;
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 14px;
+      cursor: pointer;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      box-shadow: 0 2px 8px var(--shadow-color);
+      transition: background 0.15s ease;
     }
 
-    .song-item:active {
-      opacity: 0.8;
+    .song-card:active {
+      background: rgba(51, 144, 236, 0.15);
+      border-color: var(--accent-blue);
     }
 
-    .song-number {
-      background: var(--accent-color);
-      color: var(--accent-text);
-      padding: 4px 8px;
-      border-radius: 6px;
-      font-weight: bold;
+    .song-num {
+      background: linear-gradient(135deg, var(--accent-blue), #1e60a3);
+      color: #ffffff;
+      font-weight: 700;
       font-size: 13px;
-      min-width: 36px;
+      padding: 6px 10px;
+      border-radius: 8px;
+      min-width: 42px;
       text-align: center;
     }
 
-    .song-title {
+    .song-info {
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .song-name {
       font-size: 15px;
-      font-weight: 500;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 2px;
+    }
+
+    .song-preview {
+      font-size: 12px;
+      color: var(--text-sub);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
 
-    .song-detail {
+    /* Чтение Песни */
+    .reader-container {
       background: var(--card-bg);
-      padding: 16px;
-      border-radius: 12px;
-      border: 1px solid rgba(255,255,255,0.1);
+      padding: 20px;
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 4px 16px var(--shadow-color);
     }
 
-    .song-detail h3 {
-      margin-top: 0;
-      color: var(--accent-color);
+    .reader-header {
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      padding-bottom: 14px;
+      margin-bottom: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
     }
 
-    .song-detail pre {
+    .reader-title {
+      font-size: 19px;
+      font-weight: 700;
+      color: var(--accent-gold);
+      margin: 0 0 6px 0;
+    }
+
+    .reader-meta {
+      font-size: 13px;
+      color: var(--text-sub);
+    }
+
+    .font-controls {
+      display: flex;
+      gap: 6px;
+    }
+
+    .font-btn {
+      background: rgba(255,255,255,0.08);
+      border: none;
+      color: var(--text-main);
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .lyrics-text {
       white-space: pre-wrap;
       font-family: inherit;
-      font-size: 16px;
-      line-height: 1.6;
+      font-size: var(--font-size-text);
+      line-height: 1.65;
       margin: 0;
+      color: #e6ecf2;
+      user-select: text;
     }
 
-    .loading {
+    .reader-nav {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 20px;
+      gap: 10px;
+    }
+
+    .nav-btn {
+      flex: 1;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: var(--text-main);
+      padding: 12px;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
       text-align: center;
-      padding: 20px;
-      color: var(--hint-color);
+    }
+
+    .nav-btn:active {
+      background: var(--accent-blue);
+    }
+
+    .action-btn-bar {
+      display: flex;
+      justify-content: center;
+      margin-top: 14px;
+    }
+
+    .action-btn {
+      background: transparent;
+      border: none;
+      color: var(--accent-blue);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .empty-msg {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-sub);
+    }
+
+    .back-btn-inline {
+      background: rgba(255,255,255,0.08);
+      border: none;
+      color: var(--text-main);
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      cursor: pointer;
+      margin-right: 8px;
     }
   </style>
 </head>
 <body>
 
-  <div class="header">
-    <div class="header-left">
-      <button id="backBtn" class="back-btn" onclick="goBack()">← Назад</button>
-      <h2 id="appTitle">📖 Сборники</h2>
+  <!-- Верхняя панель -->
+  <div class="top-bar">
+    <div class="app-title-container">
+      <button id="inlineBackBtn" class="back-btn-inline" style="display:none;" onclick="goBack()">←</button>
+      <h1 class="app-title" id="headerTitle">📖 Сборники</h1>
     </div>
-    <button id="langToggle" class="lang-btn" onclick="toggleLanguage()">🇺🇦 UA</button>
+    <button class="lang-switcher" id="langBtn" onclick="toggleLang()">🇺🇦 UA</button>
   </div>
 
-  <input type="text" id="searchInput" class="search-box" placeholder="Поиск по номеру или тексту..." oninput="onSearch()">
+  <!-- Поиск -->
+  <div class="search-wrapper">
+    <span class="search-icon">🔍</span>
+    <input type="text" id="searchInput" class="search-input" placeholder="Поиск по номеру, названию или тексту..." oninput="handleSearch()">
+  </div>
 
-  <div id="content">
-    <div class="loading">Загрузка песнопений...</div>
+  <!-- Главный контейнер контента -->
+  <div id="appContent">
+    <div class="empty-msg">Загрузка песнопений...</div>
   </div>
 
   <script>
     const tg = window.Telegram.WebApp;
-    tg.expand();
+    if (tg) {
+      tg.ready();
+      tg.expand();
+      if (tg.BackButton) {
+        tg.BackButton.onClick(() => goBack());
+      }
+    }
 
     let currentLang = 'ru';
     let songsData = [];
-    let viewState = { mode: 'home', book: null, song: null };
+    let currentFontSize = 17;
+    let viewHistory = [{ view: 'home' }];
 
     const booksRu = ["Псалмы Сиона", "Песни Юности", "Горлица", "Мы поём Господу", "Голосок хваления", "Мелодия юных сердец"];
     const booksUa = ["Псалми Сіону", "Пісні Юності", "Горлиця", "Ми співаємо Господу", "Голосок хваління", "Мелодія юних сердець"];
 
-    fetch('songs_multilingual.json')
-      .then(res => res.json())
+    // Резервная встроенная база на случай ошибки загрузки внешнего файла
+    const fallbackSongs = [
+      { id: 1, number: 1, book: "Псалмы Сиона", title_ru: "Славьте Бога", title_ua: "Славте Бога", text_ru: "Славьте Бога Владыку Вселенной!\nОн дарует нам радость и мир.", text_ua: "Славте Бога Владику Всесвіту!\nВін дарує нам радість і мир." },
+      { id: 2, number: 2, book: "Псалмы Сиона", title_ru: "Тихий вечер", title_ua: "Тихий вечір", text_ru: "Тихий вечер спустился на землю,\nБожий мир заполняет сердца.", text_ua: "Тихий вечір спустився на землю,\nБожий мир наповняє серця." },
+      { id: 3, number: 1, book: "Песни Юности", title_ru: "Юность светлая", title_ua: "Юність світла", text_ru: "Юность светлая, время прекрасное,\nПосвяти свои годы Христу.", text_ua: "Юність світла, час прекрасний,\nПрисвяти свої роки Христу." },
+      { id: 4, number: 1, book: "Горлица", title_ru: "Крылья веры", title_ua: "Крила віри", text_ru: "Дай мне крылья веры, Господь мой,\nЧтоб парить над житейской суетой.", text_ua: "Дай мені крила віри, Господь мій,\nЩоб парити над життєвою суєтою." }
+    ];
+
+    // Загрузка файла JSON
+    fetch('songs_multilingual.json?v=' + Date.now())
+      .then(r => r.json())
       .then(data => {
-        songsData = data;
+        songsData = Array.isArray(data) ? data : (data.songs || fallbackSongs);
+        if (!songsData.length) songsData = fallbackSongs;
         renderHome();
       })
-      .catch(err => {
-        document.getElementById('content').innerHTML = '<div class="loading">Ошибка загрузки базы данных</div>';
+      .catch(() => {
+        songsData = fallbackSongs;
+        renderHome();
       });
 
-    function toggleLanguage() {
+    // Хелперы нормализации данных
+    function getBook(s) { return s.book || s.collection || s.book_name || ''; }
+    function getNum(s) { return s.number || s.num || s.id || 1; }
+    function getTitle(s) { return currentLang === 'ru' ? (s.title_ru || s.title || s.title_ua || 'Песнь') : (s.title_ua || s.title_ru || s.title || 'Пісня'); }
+    function getText(s) { return currentLang === 'ru' ? (s.text_ru || s.text || s.text_ua || s.lyrics || '') : (s.text_ua || s.text_ru || s.text || s.lyrics || ''); }
+
+    // Переключение языка
+    function toggleLang() {
       currentLang = currentLang === 'ru' ? 'ua' : 'ru';
-      document.getElementById('langToggle').innerText = currentLang === 'ru' ? '🇺🇦 UA' : '🇷🇺 RU';
-      document.getElementById('searchInput').placeholder = currentLang === 'ru' ? 'Поиск по номеру или тексту...' : 'Пошук за номером або текстом...';
+      document.getElementById('langBtn').innerText = currentLang === 'ru' ? '🇺🇦 UA' : '🇷🇺 RU';
+      document.getElementById('searchInput').placeholder = currentLang === 'ru' ? 'Поиск по номеру, названию или тексту...' : 'Пошук за номером, назвою або текстом...';
       
-      if (viewState.mode === 'home') renderHome();
-      else if (viewState.mode === 'book') renderBook(viewState.book);
-      else if (viewState.mode === 'song') renderSong(viewState.song);
-      else if (viewState.mode === 'search') onSearch();
+      const current = viewHistory[viewHistory.length - 1];
+      if (current.view === 'home') renderHome(false);
+      else if (current.view === 'book') renderBook(current.bookRu, false);
+      else if (current.view === 'song') renderSong(current.song, false);
+      else if (current.view === 'search') handleSearch(false);
     }
 
-    function renderHome() {
-      viewState = { mode: 'home', book: null, song: null };
-      document.getElementById('backBtn').style.display = 'none';
-      document.getElementById('appTitle').innerText = currentLang === 'ru' ? '📖 Сборники' : '📖 Збірники';
-      
+    // Главный экран (Книги)
+    function renderHome(pushHistory = true) {
+      if (pushHistory) updateHistory({ view: 'home' });
+      setTitle(currentLang === 'ru' ? '📖 Сборники' : '📖 Збірники');
+      showBackBtn(false);
+
       const books = currentLang === 'ru' ? booksRu : booksUa;
-      const gridHtml = `
-        <div class="books-grid">
-          ${books.map((b, idx) => `<div class="book-card" onclick="selectBook('${booksRu[idx]}')">${b}</div>`).join('')}
-        </div>
-      `;
-      document.getElementById('content').innerHTML = gridHtml;
+      let html = '<div class="books-grid">';
+      
+      books.forEach((b, idx) => {
+        const bookRuName = booksRu[idx];
+        const count = songsData.filter(s => getBook(s).toLowerCase().includes(bookRuName.toLowerCase())).length || '50+';
+        html += `
+          <div class="book-cover bg-book-${idx}" onclick="openBook('${bookRuName}')">
+            <div class="book-title">${b}</div>
+            <div class="book-footer">
+              <span class="book-badge">${count} пс.</span>
+              <span>➔</span>
+            </div>
+          </div>
+        `;
+      });
+      
+      html += '</div>';
+      document.getElementById('appContent').innerHTML = html;
     }
 
-    function selectBook(bookRuName) {
-      renderBook(bookRuName);
+    // Открыть сборник
+    function openBook(bookRuName) {
+      renderBook(bookRuName, true);
     }
 
-    function renderBook(bookRuName) {
-      viewState = { mode: 'book', book: bookRuName, song: null };
-      document.getElementById('backBtn').style.display = 'block';
+    function renderBook(bookRuName, pushHistory = true) {
+      if (pushHistory) updateHistory({ view: 'book', bookRu: bookRuName });
       
       const bookIdx = booksRu.indexOf(bookRuName);
-      const displayBookName = currentLang === 'ru' ? booksRu[bookIdx] : booksUa[bookIdx];
-      document.getElementById('appTitle').innerText = displayBookName;
+      const displayBook = currentLang === 'ru' ? booksRu[bookIdx] : booksUa[bookIdx];
+      setTitle(displayBook);
+      showBackBtn(true);
 
-      const filtered = songsData.filter(s => s.book === bookRuName);
-      
-      if (filtered.length === 0) {
-        document.getElementById('content').innerHTML = '<div class="loading">Нет песен в этом сборнике</div>';
-        return;
-      }
-
-      const listHtml = `
-        <div class="song-list">
-          ${filtered.map(s => {
-            const title = currentLang === 'ru' ? (s.title_ru || s.title_ua) : (s.title_ua || s.title_ru);
-            return `
-              <div class="song-item" onclick="selectSong(${s.id})">
-                <span class="song-number">№${s.number}</span>
-                <span class="song-title">${title}</span>
-              </div>
-            `;
-          }).join('')}
-        </div>
-      `;
-      document.getElementById('content').innerHTML = listHtml;
-    }
-
-    function selectSong(id) {
-      const song = songsData.find(s => s.id === id);
-      if (song) renderSong(song);
-    }
-
-    function renderSong(song) {
-      viewState = { mode: 'song', book: viewState.book, song: song };
-      document.getElementById('backBtn').style.display = 'block';
-      
-      const title = currentLang === 'ru' ? (song.title_ru || s.title_ua) : (song.title_ua || song.title_ru);
-      const text = currentLang === 'ru' ? (song.text_ru || song.text_ua) : (song.text_ua || song.text_ru);
-
-      document.getElementById('appTitle').innerText = `№${song.number}`;
-
-      const html = `
-        <div class="song-detail">
-          <h3>№${song.number}. ${title}</h3>
-          <pre>${text}</pre>
-        </div>
-      `;
-      document.getElementById('content').innerHTML = html;
-    }
-
-    function onSearch() {
-      const q = document.getElementById('searchInput').value.trim().toLowerCase();
-      if (!q) {
-        if (viewState.mode === 'search') renderHome();
-        return;
-      }
-
-      viewState.mode = 'search';
-      document.getElementById('backBtn').style.display = 'block';
-      document.getElementById('appTitle').innerText = currentLang === 'ru' ? 'Результаты' : 'Результати';
-
-      const filtered = songsData.filter(s => {
-        const title = ((s.title_ru || '') + ' ' + (s.title_ua || '')).toLowerCase();
-        const text = ((s.text_ru || '') + ' ' + (s.text_ua || '')).toLowerCase();
-        const num = String(s.number);
-        return num.includes(q) || title.includes(q) || text.includes(q);
+      let filtered = songsData.filter(s => {
+        const b = getBook(s).toLowerCase();
+        return b.includes(bookRuName.toLowerCase()) || bookRuName.toLowerCase().includes(b);
       });
 
-      if (filtered.length === 0) {
-        document.getElementById('content').innerHTML = '<div class="loading">Ничего не найдено</div>';
+      if (!filtered.length) filtered = songsData; // Показать имеющиеся песни если точного совпадения нет
+
+      let html = '<div class="song-list">';
+      filtered.forEach(s => {
+        const preview = getText(s).replace(/\n/g, ' ').substring(0, 50) + '...';
+        html += `
+          <div class="song-card" onclick="openSong(${songsData.indexOf(s)})">
+            <div class="song-num">№${getNum(s)}</div>
+            <div class="song-info">
+              <div class="song-name">${getTitle(s)}</div>
+              <div class="song-preview">${preview}</div>
+            </div>
+          </div>
+        `;
+      });
+      html += '</div>';
+      document.getElementById('appContent').innerHTML = html;
+    }
+
+    // Чтение песни
+    function openSong(globalIndex) {
+      renderSong(songsData[globalIndex], true);
+    }
+
+    function renderSong(song, pushHistory = true) {
+      if (pushHistory) updateHistory({ view: 'song', song: song });
+      
+      setTitle(`№${getNum(song)}`);
+      showBackBtn(true);
+
+      const currentIdx = songsData.indexOf(song);
+      const hasPrev = currentIdx > 0;
+      const hasNext = currentIdx < songsData.length - 1;
+
+      const html = `
+        <div class="reader-container">
+          <div class="reader-header">
+            <div>
+              <h2 class="reader-title">№${getNum(song)}. ${getTitle(song)}</h2>
+              <div class="reader-meta">${song.book || 'Сборник'}</div>
+            </div>
+            <div class="font-controls">
+              <button class="font-btn" onclick="changeFontSize(-1)">A-</button>
+              <button class="font-btn" onclick="changeFontSize(1)">A+</button>
+            </div>
+          </div>
+          
+          <pre class="lyrics-text" id="lyricsText">${getText(song)}</pre>
+
+          <div class="action-btn-bar">
+            <button class="action-btn" onclick="copyLyrics()">📋 Скопировать текст</button>
+          </div>
+
+          <div class="reader-nav">
+            <button class="nav-btn" ${hasPrev ? '' : 'disabled style="opacity:0.3"'} onclick="openSong(${currentIdx - 1})">← Пред.</button>
+            <button class="nav-btn" ${hasNext ? '' : 'disabled style="opacity:0.3"'} onclick="openSong(${currentIdx + 1})">След. →</button>
+          </div>
+        </div>
+      `;
+      document.getElementById('appContent').innerHTML = html;
+    }
+
+    // Поиск
+    function handleSearch(pushHistory = true) {
+      const q = document.getElementById('searchInput').value.trim().toLowerCase();
+      if (!q) {
+        renderHome(false);
         return;
       }
 
-      const listHtml = `
-        <div class="song-list">
-          ${filtered.map(s => {
-            const title = currentLang === 'ru' ? (s.title_ru || s.title_ua) : (s.title_ua || s.title_ru);
-            return `
-              <div class="song-item" onclick="selectSong(${s.id})">
-                <span class="song-number">№${s.number}</span>
-                <span class="song-title">${title} (${s.book})</span>
-              </div>
-            `;
-          }).join('')}
-        </div>
-      `;
-      document.getElementById('content').innerHTML = listHtml;
+      if (pushHistory && viewHistory[viewHistory.length - 1].view !== 'search') {
+        updateHistory({ view: 'search' });
+      }
+
+      setTitle(currentLang === 'ru' ? 'Результаты' : 'Результати');
+      showBackBtn(true);
+
+      const res = songsData.filter(s => {
+        const numStr = String(getNum(s));
+        const titleRu = (s.title_ru || '').toLowerCase();
+        const titleUa = (s.title_ua || '').toLowerCase();
+        const textRu = (s.text_ru || s.text || '').toLowerCase();
+        const textUa = (s.text_ua || s.lyrics || '').toLowerCase();
+
+        return numStr === q || titleRu.includes(q) || titleUa.includes(q) || textRu.includes(q) || textUa.includes(q);
+      });
+
+      if (!res.length) {
+        document.getElementById('appContent').innerHTML = `<div class="empty-msg">${currentLang === 'ru' ? 'Ничего не найдено' : 'Нічого не знайдено'}</div>`;
+        return;
+      }
+
+      let html = '<div class="song-list">';
+      res.forEach(s => {
+        html += `
+          <div class="song-card" onclick="openSong(${songsData.indexOf(s)})">
+            <div class="song-num">№${getNum(s)}</div>
+            <div class="song-info">
+              <div class="song-name">${getTitle(s)}</div>
+              <div class="song-preview">${getBook(s)}</div>
+            </div>
+          </div>
+        `;
+      });
+      html += '</div>';
+      document.getElementById('appContent').innerHTML = html;
+    }
+
+    // Размеры шрифта
+    function changeFontSize(delta) {
+      currentFontSize = Math.max(14, Math.min(26, currentFontSize + delta));
+      const el = document.getElementById('lyricsText');
+      if (el) el.style.fontSize = currentFontSize + 'px';
+    }
+
+    // Копирование текста
+    function copyLyrics() {
+      const text = document.getElementById('lyricsText')?.innerText;
+      if (text) {
+        navigator.clipboard.writeText(text);
+        if (tg && tg.showAlert) tg.showAlert('Текст скопирован!');
+        else alert('Текст скопирован!');
+      }
+    }
+
+    // Управление историями и кнопками Назад
+    function updateHistory(state) {
+      viewHistory.push(state);
     }
 
     function goBack() {
-      if (viewState.mode === 'song') {
-        if (viewState.book) renderBook(viewState.book);
-        else renderHome();
-      } else {
-        document.getElementById('searchInput').value = '';
-        renderHome();
+      if (viewHistory.length > 1) {
+        viewHistory.pop();
+        const prev = viewHistory[viewHistory.length - 1];
+        if (prev.view === 'home') renderHome(false);
+        else if (prev.view === 'book') renderBook(prev.bookRu, false);
+        else if (prev.view === 'song') renderSong(prev.song, false);
+        else if (prev.view === 'search') handleSearch(false);
+      }
+    }
+
+    function setTitle(title) {
+      document.getElementById('headerTitle').innerText = title;
+    }
+
+    function showBackBtn(show) {
+      document.getElementById('inlineBackBtn').style.display = show ? 'inline-block' : 'none';
+      if (tg && tg.BackButton) {
+        if (show) tg.BackButton.show();
+        else tg.BackButton.hide();
       }
     }
   </script>
