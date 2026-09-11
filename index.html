@@ -7,51 +7,74 @@
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
     :root {
-      --bg-color: var(--tg-theme-bg-color, #121212);
+      --bg-color: var(--tg-theme-bg-color, #17212b);
       --text-color: var(--tg-theme-text-color, #ffffff);
-      --card-bg: var(--tg-theme-secondary-bg-color, #1e1e1e);
-      --accent-color: var(--tg-theme-button-color, #2481cc);
+      --card-bg: var(--tg-theme-secondary-bg-color, #232e3c);
+      --accent-color: var(--tg-theme-button-color, #5288c1);
+      --accent-text: var(--tg-theme-button-text-color, #ffffff);
+      --hint-color: var(--tg-theme-hint-color, #7f91a4);
     }
+
+    * { box-sizing: border-box; }
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       background-color: var(--bg-color);
       color: var(--text-color);
       margin: 0;
-      padding: 16px;
+      padding: 14px;
+      min-height: 100vh;
     }
 
     .header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 16px;
+      margin-bottom: 14px;
+      gap: 10px;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .back-btn {
+      display: none;
+      background: var(--card-bg);
+      border: 1px solid rgba(255,255,255,0.2);
+      color: var(--text-color);
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 14px;
+      cursor: pointer;
     }
 
     .header h2 {
       margin: 0;
-      font-size: 20px;
+      font-size: 18px;
     }
 
     .lang-btn {
-      background: var(--card-bg);
-      border: 1px solid var(--accent-color);
-      color: var(--text-color);
+      background: var(--accent-color);
+      color: var(--accent-text);
+      border: none;
       padding: 6px 14px;
       border-radius: 8px;
       font-weight: bold;
       cursor: pointer;
+      font-size: 13px;
     }
 
     .search-box {
       width: 100%;
       padding: 12px;
       border-radius: 10px;
-      border: 1px solid rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.15);
       background: var(--card-bg);
       color: var(--text-color);
-      box-sizing: border-box;
-      margin-bottom: 16px;
+      margin-bottom: 14px;
       font-size: 15px;
       outline: none;
     }
@@ -64,51 +87,256 @@
 
     .book-card {
       background: var(--card-bg);
-      padding: 18px 12px;
+      padding: 18px 10px;
       border-radius: 12px;
       text-align: center;
       font-weight: 600;
       font-size: 14px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
       cursor: pointer;
-      border: 1px solid rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.15);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    }
+
+    .book-card:active {
+      background: var(--accent-color);
+      color: var(--accent-text);
+    }
+
+    .song-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .song-item {
+      background: var(--card-bg);
+      padding: 12px 14px;
+      border-radius: 10px;
+      cursor: pointer;
+      border: 1px solid rgba(255,255,255,0.08);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .song-item:active {
+      opacity: 0.8;
+    }
+
+    .song-number {
+      background: var(--accent-color);
+      color: var(--accent-text);
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-weight: bold;
+      font-size: 13px;
+      min-width: 36px;
+      text-align: center;
+    }
+
+    .song-title {
+      font-size: 15px;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .song-detail {
+      background: var(--card-bg);
+      padding: 16px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .song-detail h3 {
+      margin-top: 0;
+      color: var(--accent-color);
+    }
+
+    .song-detail pre {
+      white-space: pre-wrap;
+      font-family: inherit;
+      font-size: 16px;
+      line-height: 1.6;
+      margin: 0;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 20px;
+      color: var(--hint-color);
     }
   </style>
 </head>
 <body>
 
   <div class="header">
-    <h2 id="appTitle">📖 Псалмы</h2>
+    <div class="header-left">
+      <button id="backBtn" class="back-btn" onclick="goBack()">← Назад</button>
+      <h2 id="appTitle">📖 Сборники</h2>
+    </div>
     <button id="langToggle" class="lang-btn" onclick="toggleLanguage()">🇺🇦 UA</button>
   </div>
 
-  <input type="text" id="searchInput" class="search-box" placeholder="Поиск по номеру или тексту...">
+  <input type="text" id="searchInput" class="search-box" placeholder="Поиск по номеру или тексту..." oninput="onSearch()">
 
-  <div class="books-grid" id="booksGrid"></div>
+  <div id="content">
+    <div class="loading">Загрузка песнопений...</div>
+  </div>
 
   <script>
     const tg = window.Telegram.WebApp;
     tg.expand();
 
     let currentLang = 'ru';
+    let songsData = [];
+    let viewState = { mode: 'home', book: null, song: null };
 
     const booksRu = ["Псалмы Сиона", "Песни Юности", "Горлица", "Мы поём Господу", "Голосок хваления", "Мелодия юных сердец"];
     const booksUa = ["Псалми Сіону", "Пісні Юності", "Горлиця", "Ми співаємо Господу", "Голосок хваління", "Мелодія юних сердець"];
+
+    fetch('songs_multilingual.json')
+      .then(res => res.json())
+      .then(data => {
+        songsData = data;
+        renderHome();
+      })
+      .catch(err => {
+        document.getElementById('content').innerHTML = '<div class="loading">Ошибка загрузки базы данных</div>';
+      });
 
     function toggleLanguage() {
       currentLang = currentLang === 'ru' ? 'ua' : 'ru';
       document.getElementById('langToggle').innerText = currentLang === 'ru' ? '🇺🇦 UA' : '🇷🇺 RU';
       document.getElementById('searchInput').placeholder = currentLang === 'ru' ? 'Поиск по номеру или тексту...' : 'Пошук за номером або текстом...';
-      renderBooks();
+      
+      if (viewState.mode === 'home') renderHome();
+      else if (viewState.mode === 'book') renderBook(viewState.book);
+      else if (viewState.mode === 'song') renderSong(viewState.song);
+      else if (viewState.mode === 'search') onSearch();
     }
 
-    function renderBooks() {
+    function renderHome() {
+      viewState = { mode: 'home', book: null, song: null };
+      document.getElementById('backBtn').style.display = 'none';
+      document.getElementById('appTitle').innerText = currentLang === 'ru' ? '📖 Сборники' : '📖 Збірники';
+      
       const books = currentLang === 'ru' ? booksRu : booksUa;
-      const grid = document.getElementById('booksGrid');
-      grid.innerHTML = books.map(book => `<div class="book-card">${book}</div>`).join('');
+      const gridHtml = `
+        <div class="books-grid">
+          ${books.map((b, idx) => `<div class="book-card" onclick="selectBook('${booksRu[idx]}')">${b}</div>`).join('')}
+        </div>
+      `;
+      document.getElementById('content').innerHTML = gridHtml;
     }
 
-    renderBooks();
+    function selectBook(bookRuName) {
+      renderBook(bookRuName);
+    }
+
+    function renderBook(bookRuName) {
+      viewState = { mode: 'book', book: bookRuName, song: null };
+      document.getElementById('backBtn').style.display = 'block';
+      
+      const bookIdx = booksRu.indexOf(bookRuName);
+      const displayBookName = currentLang === 'ru' ? booksRu[bookIdx] : booksUa[bookIdx];
+      document.getElementById('appTitle').innerText = displayBookName;
+
+      const filtered = songsData.filter(s => s.book === bookRuName);
+      
+      if (filtered.length === 0) {
+        document.getElementById('content').innerHTML = '<div class="loading">Нет песен в этом сборнике</div>';
+        return;
+      }
+
+      const listHtml = `
+        <div class="song-list">
+          ${filtered.map(s => {
+            const title = currentLang === 'ru' ? (s.title_ru || s.title_ua) : (s.title_ua || s.title_ru);
+            return `
+              <div class="song-item" onclick="selectSong(${s.id})">
+                <span class="song-number">№${s.number}</span>
+                <span class="song-title">${title}</span>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `;
+      document.getElementById('content').innerHTML = listHtml;
+    }
+
+    function selectSong(id) {
+      const song = songsData.find(s => s.id === id);
+      if (song) renderSong(song);
+    }
+
+    function renderSong(song) {
+      viewState = { mode: 'song', book: viewState.book, song: song };
+      document.getElementById('backBtn').style.display = 'block';
+      
+      const title = currentLang === 'ru' ? (song.title_ru || s.title_ua) : (song.title_ua || song.title_ru);
+      const text = currentLang === 'ru' ? (song.text_ru || song.text_ua) : (song.text_ua || song.text_ru);
+
+      document.getElementById('appTitle').innerText = `№${song.number}`;
+
+      const html = `
+        <div class="song-detail">
+          <h3>№${song.number}. ${title}</h3>
+          <pre>${text}</pre>
+        </div>
+      `;
+      document.getElementById('content').innerHTML = html;
+    }
+
+    function onSearch() {
+      const q = document.getElementById('searchInput').value.trim().toLowerCase();
+      if (!q) {
+        if (viewState.mode === 'search') renderHome();
+        return;
+      }
+
+      viewState.mode = 'search';
+      document.getElementById('backBtn').style.display = 'block';
+      document.getElementById('appTitle').innerText = currentLang === 'ru' ? 'Результаты' : 'Результати';
+
+      const filtered = songsData.filter(s => {
+        const title = ((s.title_ru || '') + ' ' + (s.title_ua || '')).toLowerCase();
+        const text = ((s.text_ru || '') + ' ' + (s.text_ua || '')).toLowerCase();
+        const num = String(s.number);
+        return num.includes(q) || title.includes(q) || text.includes(q);
+      });
+
+      if (filtered.length === 0) {
+        document.getElementById('content').innerHTML = '<div class="loading">Ничего не найдено</div>';
+        return;
+      }
+
+      const listHtml = `
+        <div class="song-list">
+          ${filtered.map(s => {
+            const title = currentLang === 'ru' ? (s.title_ru || s.title_ua) : (s.title_ua || s.title_ru);
+            return `
+              <div class="song-item" onclick="selectSong(${s.id})">
+                <span class="song-number">№${s.number}</span>
+                <span class="song-title">${title} (${s.book})</span>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `;
+      document.getElementById('content').innerHTML = listHtml;
+    }
+
+    function goBack() {
+      if (viewState.mode === 'song') {
+        if (viewState.book) renderBook(viewState.book);
+        else renderHome();
+      } else {
+        document.getElementById('searchInput').value = '';
+        renderHome();
+      }
+    }
   </script>
 </body>
 </html>
