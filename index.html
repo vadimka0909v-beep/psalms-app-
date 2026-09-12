@@ -3,607 +3,460 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Заявка</title>
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<title>Побег из подземелья</title>
 <style>
-  :root{
-    --bg:#0B0E1A;
-    --bg-elevated:#12182B;
-    --bg-card:#1A2138;
-    --bg-card-hover:#212A46;
-    --accent:#6C5CE7;
-    --accent-2:#00D9C0;
-    --accent-warm:#FF7A59;
-    --text:#F1F2F8;
-    --text-muted:#8991B3;
-    --border:#262F4C;
-    --radius-tail: 26px 26px 26px 6px;
-    --font-head:'Space Grotesk',sans-serif;
-    --font-body:'Manrope',sans-serif;
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html, body { width:100%; height:100%; overflow:hidden; background:#0a0505; font-family:-apple-system, sans-serif; user-select:none; }
+  canvas { display:block; touch-action:none; }
+  #ui { position:fixed; top:0; left:0; width:100%; pointer-events:none; z-index:10; padding:10px; }
+  #topBar { display:flex; justify-content:space-between; align-items:center; padding:0 8px; }
+  #scoreBox, #coinBox { color:#fff; font-size:20px; font-weight:900; text-shadow:0 0 6px #ffb400, 2px 2px 0 #000; display:flex; align-items:center; gap:6px; }
+  #scoreBox { color:#fff; }
+  #hearts { display:flex; gap:4px; font-size:22px; }
+  .heart { filter:drop-shadow(0 0 4px #ff0044); }
+  #pauseBtn { pointer-events:auto; font-size:26px; color:#fff; background:rgba(0,0,0,.5); border:2px solid #ffb400; border-radius:8px; width:44px; height:44px; display:flex; align-items:center; justify-content:center; cursor:pointer; }
+  #startScreen, #gameOverScreen {
+    position:fixed; inset:0; background:rgba(0,0,0,.85);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    color:#fff; z-index:20; text-align:center; padding:20px;
   }
-  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
-  html,body{margin:0;padding:0;height:100%;}
-  body{
-    background:var(--bg);
-    background-image:
-      radial-gradient(circle at 15% 0%, rgba(108,92,231,0.18), transparent 45%),
-      radial-gradient(circle at 90% 20%, rgba(0,217,192,0.12), transparent 40%);
-    color:var(--text);
-    font-family:var(--font-body);
-    overflow:hidden;
-    -webkit-user-select:none; user-select:none;
-  }
-  #app{
-    position:relative;
-    height:100vh;
-    height:100dvh;
-    max-width:520px;
-    margin:0 auto;
-    display:flex;
-    flex-direction:column;
-    padding:18px 20px calc(20px + env(safe-area-inset-bottom));
-  }
-
-  /* ---------- top bar / progress ---------- */
-  .topbar{display:flex; align-items:center; gap:10px; margin-bottom:22px; min-height:34px;}
-  .back-btn{
-    width:34px;height:34px;border-radius:50%;
-    background:var(--bg-card); border:1px solid var(--border);
-    display:flex;align-items:center;justify-content:center;
-    color:var(--text-muted); flex-shrink:0; cursor:pointer;
-    transition:opacity .2s, transform .15s;
-  }
-  .back-btn:active{transform:scale(.9);}
-  .back-btn.hidden{visibility:hidden;}
-  .progress-track{flex:1; display:flex; gap:5px;}
-  .progress-seg{flex:1; height:4px; border-radius:3px; background:var(--border); overflow:hidden; position:relative;}
-  .progress-seg::after{
-    content:''; position:absolute; inset:0; border-radius:3px;
-    background:linear-gradient(90deg,var(--accent),var(--accent-2));
-    transform:translateX(-100%); transition:transform .5s cubic-bezier(.65,0,.35,1);
-  }
-  .progress-seg.filled::after{transform:translateX(0);}
-  .step-count{font-size:12px; color:var(--text-muted); font-variant-numeric:tabular-nums; flex-shrink:0;}
-
-  /* ---------- screens ---------- */
-  .screens{flex:1; position:relative; overflow:hidden;}
-  .screen{
-    position:absolute; inset:0;
-    display:flex; flex-direction:column;
-    opacity:0; transform:translateX(24px);
-    pointer-events:none;
-    transition:opacity .35s ease, transform .35s cubic-bezier(.65,0,.35,1);
-  }
-  .screen.active{opacity:1; transform:translateX(0); pointer-events:auto;}
-  .screen.leaving-back{transform:translateX(-24px);}
-  .screen-body{flex:1; overflow-y:auto; padding-bottom:12px; -ms-overflow-style:none; scrollbar-width:none;}
-  .screen-body::-webkit-scrollbar{display:none;}
-
-  h1.step-title{font-family:var(--font-head); font-size:26px; line-height:1.15; margin:0 0 6px; font-weight:600;}
-  p.step-help{color:var(--text-muted); font-size:14.5px; line-height:1.5; margin:0 0 22px; max-width:38ch;}
-
-  /* ---------- option cards ---------- */
-  .card-grid{display:flex; flex-direction:column; gap:10px;}
-  .opt-card{
-    display:flex; align-items:center; gap:14px;
-    background:var(--bg-card); border:1.5px solid var(--border);
-    border-radius:var(--radius-tail);
-    padding:16px 16px;
-    cursor:pointer;
-    transition:border-color .2s, background .2s, transform .12s;
-  }
-  .opt-card:active{transform:scale(.985);}
-  .opt-card.selected{
-    border-color:var(--accent);
-    background:linear-gradient(135deg, rgba(108,92,231,0.16), rgba(0,217,192,0.08));
-    box-shadow:0 0 0 1px rgba(108,92,231,.35), 0 8px 24px -8px rgba(108,92,231,.5);
-  }
-  .opt-icon{
-    width:38px;height:38px; flex-shrink:0; border-radius:12px;
-    display:flex;align-items:center;justify-content:center;
-    background:var(--bg-elevated); color:var(--accent-2);
-  }
-  .opt-card.selected .opt-icon{background:rgba(108,92,231,.2); color:#fff;}
-  .opt-text{flex:1;}
-  .opt-title{font-size:15.5px; font-weight:600; margin:0 0 2px;}
-  .opt-sub{font-size:12.5px; color:var(--text-muted); margin:0;}
-  .opt-check{
-    width:20px;height:20px; border-radius:50%; border:1.5px solid var(--border);
-    flex-shrink:0; display:flex;align-items:center;justify-content:center;
-  }
-  .opt-card.selected .opt-check{background:var(--accent); border-color:var(--accent);}
-  .opt-check svg{opacity:0; transition:opacity .15s;}
-  .opt-card.selected .opt-check svg{opacity:1;}
-
-  /* ---------- textarea ---------- */
-  textarea, input[type=text]{
-    width:100%; background:var(--bg-card); border:1.5px solid var(--border);
-    border-radius:18px; color:var(--text); font-family:var(--font-body);
-    font-size:15px; padding:16px; resize:none; outline:none;
-    transition:border-color .2s;
-  }
-  textarea:focus, input[type=text]:focus{border-color:var(--accent);}
-  textarea::placeholder, input::placeholder{color:var(--text-muted);}
-  textarea{min-height:130px;}
-
-  /* ---------- budget slider ---------- */
-  .budget-display{text-align:center; margin:10px 0 34px;}
-  .budget-value{font-family:var(--font-head); font-size:46px; font-weight:700; letter-spacing:-.5px;
-    background:linear-gradient(90deg,var(--accent-2),var(--accent)); -webkit-background-clip:text; background-clip:text; color:transparent;}
-  .budget-label{font-size:13px; color:var(--text-muted); margin-top:2px;}
-  input[type=range]{
-    -webkit-appearance:none; width:100%; height:8px; border-radius:6px;
-    background:var(--border); outline:none; margin:0 0 14px;
-  }
-  input[type=range]::-webkit-slider-thumb{
-    -webkit-appearance:none; width:26px; height:26px; border-radius:50%;
-    background:#fff; border:5px solid var(--accent); cursor:pointer;
-    box-shadow:0 4px 12px rgba(108,92,231,.5);
-  }
-  .budget-ticks{display:flex; justify-content:space-between; font-size:11.5px; color:var(--text-muted);}
-
-  /* ---------- calendar ---------- */
-  .section-label{font-size:13px; color:var(--text-muted); font-weight:600; margin:0 0 10px;}
-  .day-row{display:flex; gap:8px; overflow-x:auto; padding-bottom:6px; margin-bottom:24px;}
-  .day-row::-webkit-scrollbar{display:none;}
-  .day-card{
-    flex:0 0 auto; width:58px; padding:12px 0; border-radius:18px;
-    background:var(--bg-card); border:1.5px solid var(--border);
-    display:flex; flex-direction:column; align-items:center; gap:4px; cursor:pointer;
-  }
-  .day-card.selected{border-color:var(--accent-2); background:rgba(0,217,192,.12); box-shadow:0 0 0 1px rgba(0,217,192,.35);}
-  .day-wd{font-size:11.5px; color:var(--text-muted); text-transform:lowercase;}
-  .day-num{font-family:var(--font-head); font-size:19px; font-weight:600;}
-  .time-row{display:flex; gap:8px; margin-bottom:24px;}
-  .time-pill{
-    flex:1; text-align:center; padding:12px 0; border-radius:14px;
-    background:var(--bg-card); border:1.5px solid var(--border);
-    font-size:14px; cursor:pointer; color:var(--text-muted);
-  }
-  .time-pill.selected{border-color:var(--accent); color:var(--text); background:rgba(108,92,231,.14);}
-  .contact-toggle{display:flex; background:var(--bg-card); border:1.5px solid var(--border); border-radius:16px; padding:4px;}
-  .contact-opt{flex:1; text-align:center; padding:10px 0; border-radius:12px; font-size:14px; color:var(--text-muted); cursor:pointer; transition:background .2s,color .2s;}
-  .contact-opt.selected{background:linear-gradient(90deg,var(--accent),var(--accent-2)); color:#0B0E1A; font-weight:700;}
-
-  /* ---------- contact form ---------- */
-  .field{margin-bottom:14px;}
-  .field label{display:block; font-size:12.5px; color:var(--text-muted); margin-bottom:6px; font-weight:600;}
-  .username-chip{
-    display:flex; align-items:center; gap:8px; background:var(--bg-card);
-    border:1.5px solid var(--border); border-radius:14px; padding:14px 16px; color:var(--text-muted);
-  }
-  .username-chip b{color:var(--text); font-weight:600;}
-
-  /* ---------- CTA ---------- */
-  .cta{
-    width:100%; padding:17px; border:none; border-radius:20px;
-    font-family:var(--font-body); font-size:16px; font-weight:700;
-    background:linear-gradient(90deg,var(--accent),var(--accent-2));
-    color:#0B0E1A; cursor:pointer; margin-top:auto;
-    transition:opacity .2s, transform .12s;
-  }
-  .cta:active{transform:scale(.98);}
-  .cta:disabled{opacity:.35; pointer-events:none;}
-  .cta-ghost{background:var(--bg-card); color:var(--text); border:1.5px solid var(--border);}
-
-  /* ---------- welcome ---------- */
-  .welcome{flex:1; display:flex; flex-direction:column; justify-content:center; align-items:flex-start;}
-  .welcome-badge{
-    width:64px;height:64px;border-radius:var(--radius-tail);
-    background:linear-gradient(135deg,var(--accent),var(--accent-2));
-    display:flex;align-items:center;justify-content:center; margin-bottom:22px;
-    box-shadow:0 12px 32px -10px rgba(108,92,231,.6);
-  }
-  .welcome h1{font-family:var(--font-head); font-size:32px; line-height:1.15; margin:0 0 12px;}
-  .welcome p{color:var(--text-muted); font-size:15px; line-height:1.55; margin:0 0 30px; max-width:34ch;}
-  .welcome-meta{display:flex; gap:18px; margin-bottom:36px;}
-  .welcome-meta div{font-size:12px; color:var(--text-muted);}
-  .welcome-meta b{display:block; font-family:var(--font-head); font-size:20px; color:var(--text); font-weight:600;}
-
-  /* ---------- final ---------- */
-  .final{flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; position:relative;}
-  .check-circle{
-    width:88px;height:88px;border-radius:50%; margin-bottom:26px;
-    background:radial-gradient(circle,rgba(0,217,192,.18),transparent 70%);
-    display:flex;align-items:center;justify-content:center;
-    position:relative;
-  }
-  .check-circle svg{width:44px;height:44px;}
-  .check-circle svg path{
-    stroke-dasharray:40; stroke-dashoffset:40;
-    animation:draw .5s .2s ease forwards;
-  }
-  @keyframes draw{to{stroke-dashoffset:0;}}
-  .final h1{font-family:var(--font-head); font-size:24px; margin:0 0 10px;}
-  .final p{color:var(--text-muted); font-size:14.5px; line-height:1.55; max-width:30ch; margin:0 0 30px;}
-  .confetti-piece{position:absolute; top:-10px; border-radius:2px; opacity:0; animation:fall 1.6s ease-in forwards;}
-  @keyframes fall{
-    0%{opacity:1; transform:translateY(0) rotate(0deg);}
-    100%{opacity:0; transform:translateY(340px) rotate(240deg);}
-  }
-
-  @media (prefers-reduced-motion: reduce){
-    .screen, .progress-seg::after, .check-circle svg path, .confetti-piece{transition:none !important; animation:none !important;}
-  }
+  #startScreen h1, #gameOverScreen h1 { font-size:38px; color:#ffb400; text-shadow:0 0 15px #ff5500; margin-bottom:20px; letter-spacing:2px; }
+  #startScreen p, #gameOverScreen p { font-size:16px; opacity:.8; margin-bottom:30px; line-height:1.5; max-width:300px; }
+  .btn { background:linear-gradient(180deg,#ff5500,#aa2200); color:#fff; border:3px solid #ffb400; border-radius:12px; font-size:22px; font-weight:900; padding:14px 36px; cursor:pointer; text-shadow:1px 1px 0 #000; box-shadow:0 4px 0 #551100, 0 0 20px rgba(255,85,0,.5); }
+  .btn:active { transform:translateY(3px); box-shadow:0 1px 0 #551100; }
+  #finalScore { font-size:28px; color:#ffb400; margin:10px 0 20px; }
+  #hint { position:fixed; bottom:30px; width:100%; text-align:center; color:rgba(255,255,255,.7); font-size:14px; pointer-events:none; z-index:15; animation:pulse 1.5s infinite; }
+  @keyframes pulse { 0%,100%{opacity:.3} 50%{opacity:1} }
+  .hidden { display:none !important; }
 </style>
 </head>
 <body>
-<div id="app">
-
-  <div class="topbar" id="topbar" style="display:none;">
-    <div class="back-btn" id="backBtn">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    </div>
-    <div class="progress-track" id="progressTrack"></div>
-    <div class="step-count" id="stepCount"></div>
-  </div>
-
-  <div class="screens" id="screens">
-
-    <!-- Screen 0: Welcome -->
-    <div class="screen active" data-screen="0">
-      <div class="welcome">
-        <div class="welcome-badge">
-          <svg width="30" height="30" viewBox="0 0 24 24" fill="none"><path d="M21 5L2 12.5l6.5 2.5M21 5l-3.5 15-9-5M21 5L8.5 15" stroke="#0B0E1A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </div>
-        <h1>Опишите задачу —<br>я отвечу лично</h1>
-        <p>Пара минут вместо долгой переписки. Ответьте на несколько вопросов, и заявка попадёт ко мне уже structured и готовой к работе.</p>
-        <div class="welcome-meta">
-          <div><b>~90 сек</b>время</div>
-          <div><b>6</b>коротких шагов</div>
-          <div><b>1 час</b>время ответа</div>
-        </div>
-      </div>
-      <button class="cta" id="startBtn">Начать</button>
-    </div>
-
-    <!-- Screen 1: Topic -->
-    <div class="screen" data-screen="1">
-      <div class="screen-body">
-        <h1 class="step-title">С чем помочь?</h1>
-        <p class="step-help">Выберите направление — дальше подстроим вопросы под него.</p>
-        <div class="card-grid" id="topicGrid"></div>
-      </div>
-      <button class="cta" id="next1" disabled>Далее</button>
-    </div>
-
-    <!-- Screen 2: Details (dynamic) -->
-    <div class="screen" data-screen="2">
-      <div class="screen-body">
-        <h1 class="step-title" id="step2Title">Уточним детали</h1>
-        <p class="step-help" id="step2Help">Что из этого ближе всего к вашей задаче?</p>
-        <div class="card-grid" id="detailGrid"></div>
-        <textarea id="detailText" style="display:none" placeholder="В двух словах — с чем нужна помощь?"></textarea>
-      </div>
-      <button class="cta" id="next2" disabled>Далее</button>
-    </div>
-
-    <!-- Screen 3: Budget -->
-    <div class="screen" data-screen="3">
-      <div class="screen-body">
-        <h1 class="step-title">Ориентир по бюджету</h1>
-        <p class="step-help">Можно примерно — это просто чтобы предложить релевантный вариант.</p>
-        <div class="budget-display">
-          <div class="budget-value" id="budgetValue">$500</div>
-          <div class="budget-label">ожидаемый бюджет</div>
-        </div>
-        <input type="range" id="budgetSlider" min="0" max="6" step="1" value="2">
-        <div class="budget-ticks"><span>$50</span><span>$500</span><span>$1500</span><span>$5000+</span></div>
-      </div>
-      <button class="cta" id="next3">Далее</button>
-    </div>
-
-    <!-- Screen 4: Timing & contact -->
-    <div class="screen" data-screen="4">
-      <div class="screen-body">
-        <h1 class="step-title">Когда удобно связаться?</h1>
-        <p class="step-help">Выберите ближайший подходящий день и время.</p>
-        <div class="section-label">День</div>
-        <div class="day-row" id="dayRow"></div>
-        <div class="section-label">Время</div>
-        <div class="time-row" id="timeRow">
-          <div class="time-pill" data-time="morning">Утро</div>
-          <div class="time-pill" data-time="day">День</div>
-          <div class="time-pill" data-time="evening">Вечер</div>
-        </div>
-        <div class="section-label">Как удобнее</div>
-        <div class="contact-toggle" id="contactToggle">
-          <div class="contact-opt" data-c="telegram">Telegram</div>
-          <div class="contact-opt" data-c="call">Звонок</div>
-        </div>
-      </div>
-      <button class="cta" id="next4" disabled>Далее</button>
-    </div>
-
-    <!-- Screen 5: Comment -->
-    <div class="screen" data-screen="5">
-      <div class="screen-body">
-        <h1 class="step-title">Есть что добавить?</h1>
-        <p class="step-help" id="step5Help">Необязательно, но помогает подготовиться к разговору.</p>
-        <textarea id="commentText" placeholder="Например: хочу бота с приёмом оплаты и интеграцией CRM..."></textarea>
-      </div>
-      <button class="cta" id="next5">Далее</button>
-    </div>
-
-    <!-- Screen 6: Contacts -->
-    <div class="screen" data-screen="6">
-      <div class="screen-body">
-        <h1 class="step-title">Как к вам обращаться?</h1>
-        <p class="step-help">Последний шаг — и заявка улетит мне.</p>
-        <div class="field">
-          <label>Имя</label>
-          <input type="text" id="nameInput" placeholder="Ваше имя">
-        </div>
-        <div class="field">
-          <label>Telegram</label>
-          <div class="username-chip" id="usernameChip">определяется автоматически…</div>
-        </div>
-      </div>
-      <button class="cta" id="submitBtn" disabled>Отправить заявку</button>
-    </div>
-
-    <!-- Screen 7: Final -->
-    <div class="screen" data-screen="7">
-      <div class="final" id="finalScreen">
-        <div class="check-circle">
-          <svg viewBox="0 0 24 24" fill="none"><path d="M4 12.5l5 5L20 6" stroke="#00D9C0" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </div>
-        <h1>Заявка отправлена</h1>
-        <p>Спасибо! Я посмотрю детали и отвечу вам в Telegram в течение часа.</p>
-        <button class="cta cta-ghost" id="closeBtn">Закрыть</button>
-      </div>
-    </div>
-
+<div id="ui">
+  <div id="topBar">
+    <div id="pauseBtn">⏸</div>
+    <div id="scoreBox">📏 <span id="scoreVal">0</span>м</div>
+    <div id="coinBox">🪙 <span id="coinVal">0</span></div>
+    <div id="hearts"><span class="heart">❤️</span><span class="heart">❤️</span><span class="heart">❤️</span></div>
   </div>
 </div>
+<div id="hint">Держи палец и води влево-вправо</div>
 
+<div id="startScreen">
+  <h1>ПОБЕГ</h1>
+  <p>Персонаж летит вверх и ускоряется.<br>Держи палец на экране — управляй движением влево-вправо.<br>Избегай шипов, пил и лазеров.<br>Не дай собаке «БАТЯ» догнать тебя!</p>
+  <button class="btn" id="startBtn">НАЧАТЬ</button>
+</div>
+
+<div id="gameOverScreen" class="hidden">
+  <h1>💀 ПОЙМАЛИ</h1>
+  <div id="finalScore">0 м</div>
+  <p>Собака БАТЯ догнала тебя.</p>
+  <button class="btn" id="restartBtn">ЗАНОВО</button>
+</div>
+
+<canvas id="game"></canvas>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script>
-(function(){
-  const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
-  if(tg){ tg.ready(); tg.expand(); }
+// ========================
+// НАСТРОЙКИ
+// ========================
+const CW = window.innerWidth;
+const CH = window.innerHeight;
 
-  const state = { topic:null, topicLabel:null, detail:null, budget:500, day:null, dayLabel:null,
-                  time:null, contact:'telegram', comment:'', name:'', username:null };
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+canvas.width = CW;
+canvas.height = CH;
 
-  const TOTAL_STEPS = 6;
-  let current = 0;
-  let history = [0];
+const scoreVal = document.getElementById('scoreVal');
+const coinVal = document.getElementById('coinVal');
+const heartsEl = document.querySelectorAll('.heart');
+const startScreen = document.getElementById('startScreen');
+const gameOverScreen = document.getElementById('gameOverScreen');
+const finalScore = document.getElementById('finalScore');
+const startBtn = document.getElementById('startBtn');
+const restartBtn = document.getElementById('restartBtn');
+const pauseBtn = document.getElementById('pauseBtn');
+const hintEl = document.getElementById('hint');
 
-  const screens = document.querySelectorAll('.screen');
-  const topbar = document.getElementById('topbar');
-  const progressTrack = document.getElementById('progressTrack');
-  const stepCount = document.getElementById('stepCount');
-  const backBtn = document.getElementById('backBtn');
+// Если внутри Telegram — раскрыть на весь экран
+try { window.Telegram?.WebApp?.ready(); window.Telegram?.WebApp?.expand(); } catch(e) {}
 
-  for(let i=0;i<TOTAL_STEPS;i++){
-    const seg = document.createElement('div');
-    seg.className='progress-seg';
-    progressTrack.appendChild(seg);
+// ========================
+// СПРАЙТЫ (атласы)
+// ========================
+const playerImg = new Image();  playerImg.src = 'assets/player.png';
+const enemiesImg = new Image(); enemiesImg.src = 'assets/enemies.png';
+const tilesImg = new Image();   tilesImg.src = 'assets/tiles.png';
+
+let imgsLoaded = 0;
+[playerImg, enemiesImg, tilesImg].forEach(img => {
+  img.onload = () => { imgsLoaded++; };
+  img.onerror = () => { console.warn('Не загрузилось:', img.src); imgsLoaded++; };
+});
+
+// ========================
+// АТЛАСЫ — координаты кадров
+// (подбираются визуально под твои спрайты)
+// ========================
+// Игрок: лист 1024x1024, 6 колонок × 2 строки
+const PLAYER_FRAMES = {
+  // верхняя строка — полёт (кадры 0-1), ходьба (2-5)
+  fly:    [{x:10,  y:30, w:160, h:180}, {x:180, y:30, w:160, h:180}],
+  walkR:  [{x:355, y:30, w:160, h:180}, {x:525, y:30, w:160, h:180}, {x:690, y:30, w:160, h:180}, {x:850, y:30, w:160, h:180}],
+  // нижняя строка — ходьба влево (зеркально)
+  walkL:  [{x:10,  y:250, w:160, h:180}, {x:180, y:250, w:160, h:180}, {x:355, y:250, w:160, h:180}, {x:525, y:250, w:160, h:180}, {x:690, y:250, w:160, h:180}, {x:850, y:250, w:160, h:180}]
+};
+
+// Собака: лист с врагами (нижняя часть). Возьмём средний кадр
+const DOG_FRAME = {x:20, y:700, w:200, h:180};
+const DOG_FRAME2 = {x:230, y:700, w:200, h:180};
+
+// Пауки: лист 2
+const SPIDER_GREEN  = {x:30,  y:30,  w:150, h:130};
+const SPIDER_PURPLE = {x:30,  y:260, w:150, h:130};
+const SPIDER_HANG   = {x:560, y:100, w:120, h:180};
+
+// Пила
+const SAW_BIG   = {x:30,  y:520, w:210, h:210};
+const SAW_SMALL = {x:770, y:800, w:190, h:190};
+
+// Шипы
+const SPIKES_4 = {x:320, y:520, w:250, h:110};
+const SPIKES_7 = {x:320, y:850, w:430, h:110};
+
+// Топор
+const AXE = {x:320, y:660, w:280, h:120};
+
+// Лазер-пушка
+const LASER_OFF = {x:640, y:640, w:130, h:100};
+const LASER_ON  = {x:640, y:740, w:360, h:100};
+
+// Паутина (декор)
+const WEB = {x:830, y:40, w:170, h:170};
+
+// Монета (из tiles.png — верхний левый угол, 6 кадров вращения)
+const COIN_FRAMES = [
+  {x:20,  y:30, w:60, h:60}, {x:95,  y:30, w:60, h:60}, {x:170, y:30, w:60, h:60},
+  {x:245, y:30, w:60, h:60}, {x:320, y:30, w:60, h:60}, {x:395, y:30, w:60, h:60}
+];
+
+// ========================
+// УТИЛИТА: убрать белый фон у спрайта
+// ========================
+function drawSprite(img, frame, dx, dy, dw, dh) {
+  if (!img.complete || !img.naturalWidth) return;
+  // рисуем кадр из атласа на промежуточный canvas, потом убираем белое
+  const tmp = document.createElement('canvas');
+  tmp.width = frame.w; tmp.height = frame.h;
+  const tctx = tmp.getContext('2d');
+  tctx.drawImage(img, frame.x, frame.y, frame.w, frame.h, 0, 0, frame.w, frame.h);
+  // убираем белые пиксели
+  const data = tctx.getImageData(0, 0, frame.w, frame.h);
+  const px = data.data;
+  for (let i = 0; i < px.length; i += 4) {
+    const r = px[i], g = px[i+1], b = px[i+2];
+    if (r > 240 && g > 240 && b > 240) {
+      px[i+3] = 0;
+    }
+  }
+  tctx.putImageData(data, 0, 0);
+  ctx.drawImage(tmp, dx, dy, dw, dh);
+}
+
+// ========================
+// ИГРА
+// ========================
+let player, dog, obstacles, coins, particles;
+let score, coinsCollected, hearts;
+let speed, gameOver, running, lastTime, baseSpeed = 1.6;
+let fingerX = null;
+let dogTimer = 0;
+
+function initGame() {
+  player = { x: CW/2, y: CH - 250, w: 60, h: 70, targetX: CW/2 };
+  dog = { x: CW/2, y: CH + 100, w: 90, h: 80, animFrame: 0 };
+  obstacles = [];
+  coins = [];
+  particles = [];
+  score = 0;
+  coinsCollected = 0;
+  hearts = 3;
+  speed = baseSpeed;
+  gameOver = false;
+  running = true;
+  dogTimer = 0;
+  fingerX = null;
+  updateUI();
+  requestAnimationFrame(loop);
+}
+
+function updateUI() {
+  scoreVal.textContent = Math.floor(score);
+  coinVal.textContent = coinsCollected;
+  heartsEl.forEach((h, i) => {
+    h.textContent = i < hearts ? '❤️' : '🖤';
+  });
+}
+
+// Генерация препятствий
+function spawnObstacle(y) {
+  const type = Math.random();
+  const x = 60 + Math.random() * (CW - 180);
+  if (type < 0.35) {
+    obstacles.push({ type:'spikes', x, y, w: 80, h: 30, dead:false });
+  } else if (type < 0.6) {
+    obstacles.push({ type:'saw', x, y, w: 60, h: 60, angle:0, dead:false });
+  } else if (type < 0.85) {
+    obstacles.push({ type:'spider', x, y, w: 50, h: 45, dead:false, vx: (Math.random()>0.5?1:-1) });
+  } else {
+    obstacles.push({ type:'laser', x: 20, y, w: CW - 40, h: 6, timer: Math.random()*Math.PI*2, dead:false });
+  }
+}
+
+function spawnCoin(y) {
+  coins.push({ x: 60 + Math.random() * (CW-120), y, w: 30, h: 30, frame: 0 });
+}
+
+// Цикл
+let lastSpawn = 0;
+function loop(t) {
+  if (!running) return;
+  const dt = Math.min(40, t - (lastTime || t)); lastTime = t;
+
+  // ускорение
+  speed += dt * 0.00015;
+  const move = speed * dt * 0.1;
+  score += move * 0.3;
+
+  // движение игрока
+  if (fingerX !== null) {
+    player.x += (fingerX - player.x) * 0.15;
+  }
+  player.x = Math.max(30, Math.min(CW-30, player.x));
+  player.y += move * 0.3;
+
+  // собака
+  dogTimer += dt;
+  const dogSpeed = 0.12 + Math.min(0.5, score * 0.0005);
+  dog.y -= move * dogSpeed;
+  dog.animFrame = Math.floor(t / 120) % 2;
+  dog.x += (player.x - dog.x) * 0.02;
+
+  // камера вверх
+  if (player.y < CH * 0.55) {
+    const diff = CH * 0.55 - player.y;
+    player.y = CH * 0.55;
+    dog.y += diff * 0.98;
+    obstacles.forEach(o => o.y += diff);
+    coins.forEach(c => c.y += diff);
+    score += diff * 0.15;
   }
 
-  function renderProgress(){
-    const segs = progressTrack.querySelectorAll('.progress-seg');
-    segs.forEach((s,i)=> s.classList.toggle('filled', i < current));
-    stepCount.textContent = current>=1 && current<=TOTAL_STEPS ? current+' / '+TOTAL_STEPS : '';
+  // генерация
+  lastSpawn += move;
+  if (lastSpawn > 220) {
+    lastSpawn = 0;
+    spawnObstacle(CH + 80);
+    if (Math.random() < 0.4) spawnCoin(CH - 400);
   }
 
-  function goTo(idx, dir){
-    screens.forEach(s=>{
-      s.classList.remove('active','leaving-back');
-      if(parseInt(s.dataset.screen)===idx){
-        s.classList.add('active');
-        if(dir==='back') s.classList.add('leaving-back');
-        void s.offsetWidth;
-        s.classList.remove('leaving-back');
+  // обработка препятствий
+  obstacles.forEach(o => {
+    if (o.dead) return;
+    if (o.type === 'saw') o.angle += dt * 0.01;
+    if (o.type === 'laser') o.timer += dt * 0.003;
+    if (o.type === 'spider') {
+      o.x += o.vx * 0.5;
+      if (o.x < 30 || o.x > CW-80) o.vx *= -1;
+    }
+    // лазер мигает
+    if (o.type === 'laser') {
+      o.on = Math.sin(o.timer) > 0;
+      if (o.on) {
+        // коллизия
+        if (player.y + 30 > o.y && player.y - 30 < o.y + o.h) {
+          hitPlayer();
+          o.dead = true;
+        }
       }
-    });
-    current = idx;
-    topbar.style.display = (idx>=1 && idx<=TOTAL_STEPS) ? 'flex' : 'none';
-    backBtn.classList.toggle('hidden', idx<=1);
-    renderProgress();
-    if(idx===7) launchConfetti();
-  }
-
-  function next(idx){ history.push(idx); goTo(idx,'fwd'); }
-  function back(){
-    if(history.length>1){ history.pop(); goTo(history[history.length-1],'back'); }
-  }
-  backBtn.addEventListener('click', back);
-
-  document.getElementById('startBtn').addEventListener('click', ()=> next(1));
-
-  // ---- Step 1: Topic ----
-  const topics = [
-    {id:'bot', title:'Разработка бота', sub:'Telegram-боты под задачи', icon:'🤖'},
-    {id:'fx', title:'FX / Трейдинг', sub:'Сигналы, обучение, управление', icon:'📈'},
-    {id:'manager', title:'Консультация с менеджером', sub:'Обсудить задачу голосом или текстом', icon:'🧑\u200d💼'},
-    {id:'other', title:'Другое', sub:'Свой вопрос', icon:'✳️'},
-  ];
-  const topicGrid = document.getElementById('topicGrid');
-  topics.forEach(t=>{
-    const el = document.createElement('div');
-    el.className='opt-card'; el.dataset.id=t.id;
-    el.innerHTML = `<div class="opt-icon">${t.icon}</div>
-      <div class="opt-text"><p class="opt-title">${t.title}</p><p class="opt-sub">${t.sub}</p></div>
-      <div class="opt-check"><svg width="11" height="11" viewBox="0 0 24 24" fill="none"><path d="M4 12.5l5 5L20 6" stroke="#0B0E1A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>`;
-    el.addEventListener('click', ()=>{
-      topicGrid.querySelectorAll('.opt-card').forEach(c=>c.classList.remove('selected'));
-      el.classList.add('selected');
-      state.topic = t.id; state.topicLabel = t.title;
-      document.getElementById('next1').disabled = false;
-      buildStep2();
-    });
-    topicGrid.appendChild(el);
-  });
-  document.getElementById('next1').addEventListener('click', ()=> next(2));
-
-  // ---- Step 2: dynamic details ----
-  const detailOptions = {
-    bot: {title:'Какой формат бота?', help:'Выберите ближайший вариант.', options:[
-      {id:'simple', title:'Простой бот', sub:'Ответы, кнопки, рассылки'},
-      {id:'payments', title:'Бот с оплатой', sub:'Приём платежей внутри чата'},
-      {id:'miniapp', title:'Mini App', sub:'Интерфейс внутри Telegram'},
-      {id:'unsure', title:'Нужна консультация', sub:'Пока не уверен(а) в формате'},
-    ]},
-    fx: {title:'Что интересует в трейдинге?', help:'Выберите ближайший вариант.', options:[
-      {id:'signals', title:'Сигналы', sub:'Готовые торговые идеи'},
-      {id:'education', title:'Обучение', sub:'Разбор стратегии и основ'},
-      {id:'capital', title:'Управление капиталом', sub:'Доверительное управление'},
-    ]},
-  };
-  const detailGrid = document.getElementById('detailGrid');
-  const detailText = document.getElementById('detailText');
-  const step2Title = document.getElementById('step2Title');
-  const step2Help = document.getElementById('step2Help');
-  const next2 = document.getElementById('next2');
-
-  function buildStep2(){
-    detailGrid.innerHTML=''; state.detail=null; next2.disabled = true;
-    const cfg = detailOptions[state.topic];
-    if(cfg){
-      detailGrid.style.display='flex'; detailText.style.display='none';
-      step2Title.textContent = cfg.title; step2Help.textContent = cfg.help;
-      cfg.options.forEach(o=>{
-        const el = document.createElement('div');
-        el.className='opt-card'; el.dataset.id=o.id;
-        el.innerHTML = `<div class="opt-text"><p class="opt-title">${o.title}</p><p class="opt-sub">${o.sub}</p></div>
-          <div class="opt-check"><svg width="11" height="11" viewBox="0 0 24 24" fill="none"><path d="M4 12.5l5 5L20 6" stroke="#0B0E1A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>`;
-        el.addEventListener('click', ()=>{
-          detailGrid.querySelectorAll('.opt-card').forEach(c=>c.classList.remove('selected'));
-          el.classList.add('selected');
-          state.detail = o.title; next2.disabled=false;
-        });
-        detailGrid.appendChild(el);
-      });
     } else {
-      detailGrid.style.display='none'; detailText.style.display='block';
-      step2Title.textContent = 'Расскажите подробнее'; step2Help.textContent = 'Пару предложений о задаче.';
-      detailText.value=''; next2.disabled = true;
-      detailText.oninput = ()=>{ state.detail = detailText.value.trim(); next2.disabled = state.detail.length===0; };
+      // обычная коллизия
+      if (Math.abs(player.x - (o.x + o.w/2)) < (o.w/2 + 15) &&
+          Math.abs(player.y - (o.y + o.h/2)) < (o.h/2 + 20)) {
+        hitPlayer();
+        o.dead = true;
+      }
     }
-  }
-  next2.addEventListener('click', ()=> next(3));
-
-  // ---- Step 3: budget ----
-  const budgetSteps = [50,150,500,1000,1500,3000,5000];
-  const budgetLabels = ['Минимальный','Стартовый','Средний','Расширенный','Продвинутый','Крупный','$5000+'];
-  const slider = document.getElementById('budgetSlider');
-  const budgetValue = document.getElementById('budgetValue');
-  function renderBudget(){
-    const v = budgetSteps[slider.value];
-    state.budget = v;
-    budgetValue.textContent = v>=5000 ? '$5000+' : '$'+v;
-    const t = slider.value/(budgetSteps.length-1);
-    const hue = 260 - t*90;
-    budgetValue.style.filter = 'hue-rotate(0deg)';
-  }
-  slider.addEventListener('input', renderBudget);
-  renderBudget();
-  document.getElementById('next3').addEventListener('click', ()=> next(4));
-
-  // ---- Step 4: day / time / contact ----
-  const dayRow = document.getElementById('dayRow');
-  const weekdays = ['вс','пн','вт','ср','чт','пт','сб'];
-  const next4 = document.getElementById('next4');
-  function checkStep4(){ next4.disabled = !(state.day && state.time && state.contact); }
-  for(let i=0;i<7;i++){
-    const d = new Date(); d.setDate(d.getDate()+i);
-    const el = document.createElement('div');
-    el.className='day-card';
-    el.innerHTML = `<div class="day-wd">${i===0?'сегодня':weekdays[d.getDay()]}</div><div class="day-num">${d.getDate()}</div>`;
-    el.addEventListener('click', ()=>{
-      dayRow.querySelectorAll('.day-card').forEach(c=>c.classList.remove('selected'));
-      el.classList.add('selected');
-      state.day = d.toISOString().slice(0,10);
-      state.dayLabel = (i===0?'сегодня':weekdays[d.getDay()]+' '+d.getDate());
-      checkStep4();
-    });
-    dayRow.appendChild(el);
-  }
-  document.querySelectorAll('.time-pill').forEach(p=>{
-    p.addEventListener('click', ()=>{
-      document.querySelectorAll('.time-pill').forEach(x=>x.classList.remove('selected'));
-      p.classList.add('selected'); state.time = p.dataset.time; checkStep4();
-    });
-  });
-  document.querySelectorAll('.contact-opt').forEach(p=>{
-    p.addEventListener('click', ()=>{
-      document.querySelectorAll('.contact-opt').forEach(x=>x.classList.remove('selected'));
-      p.classList.add('selected'); state.contact = p.dataset.c; checkStep4();
-    });
-  });
-  document.querySelector('.contact-opt[data-c="telegram"]').classList.add('selected');
-  document.getElementById('next4').addEventListener('click', ()=> next(5));
-
-  // ---- Step 5: comment ----
-  const commentText = document.getElementById('commentText');
-  const step5Help = document.getElementById('step5Help');
-  commentText.addEventListener('input', ()=> state.comment = commentText.value.trim());
-  document.getElementById('next5').addEventListener('click', ()=> next(6));
-
-  // ---- Step 6: contacts ----
-  const nameInput = document.getElementById('nameInput');
-  const usernameChip = document.getElementById('usernameChip');
-  const submitBtn = document.getElementById('submitBtn');
-
-  (function prefill(){
-    const u = tg && tg.initDataUnsafe && tg.initDataUnsafe.user;
-    if(u){
-      state.name = u.first_name || '';
-      nameInput.value = state.name;
-      if(u.username){ state.username = '@'+u.username; usernameChip.innerHTML = '<b>'+state.username+'</b>'; }
-      else { usernameChip.textContent = 'username не указан в Telegram'; }
-    } else {
-      usernameChip.textContent = 'откроется автоматически при запуске из бота';
-    }
-    checkStep6();
-  })();
-  nameInput.addEventListener('input', ()=>{ state.name = nameInput.value.trim(); checkStep6(); });
-  function checkStep6(){ submitBtn.disabled = state.name.length===0; }
-
-  submitBtn.addEventListener('click', ()=>{
-    const payload = {
-      topic: state.topicLabel,
-      detail: state.detail,
-      budget: state.budget,
-      day: state.dayLabel,
-      time: state.time,
-      contact_pref: state.contact,
-      comment: state.comment,
-      name: state.name,
-      username: state.username
-    };
-    if(tg){
-      tg.sendData(JSON.stringify(payload));
-    } else {
-      console.log('Заявка (тест вне Telegram):', payload);
-    }
-    next(7);
   });
 
-  document.getElementById('closeBtn').addEventListener('click', ()=>{
-    if(tg) tg.close(); else alert('В Telegram это закроет мини-апп.');
+  // монеты
+  coins = coins.filter(c => !c.dead);
+  coins.forEach(c => {
+    c.frame = Math.floor(t / 100) % 6;
+    if (Math.abs(player.x - (c.x+15)) < 30 && Math.abs(player.y - (c.y+15)) < 30) {
+      c.dead = true;
+      coinsCollected++;
+      for (let i=0; i<8; i++) {
+        particles.push({ x:c.x, y:c.y, vx:(Math.random()-0.5)*6, vy:(Math.random()-0.5)*6, life:20, color:'#ffd700' });
+      }
+    }
   });
 
-  function launchConfetti(){
-    const colors = ['#6C5CE7','#00D9C0','#FF7A59'];
-    const holder = document.getElementById('finalScreen');
-    for(let i=0;i<24;i++){
-      const p = document.createElement('div');
-      p.className='confetti-piece';
-      const size = 6+Math.random()*5;
-      p.style.width=size+'px'; p.style.height=size+'px';
-      p.style.left=(10+Math.random()*80)+'%';
-      p.style.background=colors[i%colors.length];
-      p.style.animationDelay=(Math.random()*0.4)+'s';
-      p.style.borderRadius = Math.random()>0.5 ? '50%':'2px';
-      holder.appendChild(p);
-      setTimeout(()=>p.remove(), 2200);
+  // удаление мусора
+  obstacles = obstacles.filter(o => o.y < CH + 200 && !o.dead);
+  coins = coins.filter(c => c.y < CH + 100 && !c.dead);
+
+  // проверка — собака догнала
+  if (dog.y < player.y + 20) {
+    gameOver = true;
+    running = false;
+    finalScore.textContent = Math.floor(score) + ' м';
+    gameOverScreen.classList.remove('hidden');
+    hintEl.classList.add('hidden');
+  }
+
+  // частицы
+  particles = particles.filter(p => p.life > 0);
+  particles.forEach(p => { p.x += p.vx; p.y += p.vy; p.life--; });
+
+  updateUI();
+  render();
+  requestAnimationFrame(loop);
+}
+
+function hitPlayer() {
+  hearts--;
+  if (hearts <= 0) {
+    gameOver = true;
+    running = false;
+    finalScore.textContent = Math.floor(score) + ' м';
+    gameOverScreen.classList.remove('hidden');
+    hintEl.classList.add('hidden');
+  }
+  // тряска
+  canvas.style.transform = 'translate(' + (Math.random()*10-5) + 'px,' + (Math.random()*10-5) + 'px)';
+  setTimeout(() => canvas.style.transform = '', 100);
+}
+
+// ========================
+// ОТРИСОВКА
+// ========================
+function render() {
+  // фон — тёмное подземелье
+  const grad = ctx.createLinearGradient(0, 0, 0, CH);
+  grad.addColorStop(0, '#0a0202');
+  grad.addColorStop(1, '#1a0808');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, CW, CH);
+
+  // кирпичная текстура (программная, бесшовная)
+  ctx.fillStyle = 'rgba(60,20,15,0.4)';
+  const brickH = 20, brickW = 40;
+  const offset = (score * 6) % brickH;
+  for (let y = -brickH; y < CH + brickH; y += brickH) {
+    for (let x = 0; x < CW; x += brickW) {
+      const bxx = x + ((Math.floor((y+offset)/brickH) % 2) * brickW/2);
+      ctx.fillRect(bxx + 1, y + offset + 1, brickW - 2, brickH - 2);
     }
   }
-})();
+
+  // боковые стены
+  ctx.fillStyle = 'rgba(30,10,5,0.8)';
+  ctx.fillRect(0, 0, 15, CH);
+  ctx.fillRect(CW-15, 0, 15, CH);
+
+  // препятствия
+  obstacles.forEach(o => {
+    if (o.type === 'spikes') {
+      drawSprite(enemiesImg, SPIKES_4, o.x, o.y, o.w, o.h);
+    } else if (o.type === 'saw') {
+      ctx.save();
+      ctx.translate(o.x + o.w/2, o.y + o.h/2);
+      ctx.rotate(o.angle);
+      drawSprite(enemiesImg, SAW_BIG, -o.w/2, -o.h/2, o.w, o.h);
+      ctx.restore();
+    } else if (o.type === 'spider') {
+      drawSprite(enemiesImg, SPIDER_GREEN, o.x, o.y, o.w, o.h);
+    } else if (o.type === 'laser') {
+      if (o.on) {
+        ctx.save();
+        ctx.shadowColor = '#ff0044';
+        ctx.shadowBlur = 15;
+        ctx.fillStyle = '#ff2244';
+        ctx.fillRect(o.x, o.y, o.w, o.h);
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(o.x, o.y + o.h/2 - 1, o.w, 2);
+        ctx.restore();
+      }
+    }
+  });
+
+  // монеты
+  coins.forEach(c => {
+    const fr = COIN_FRAMES[c.frame];
+    drawSprite(tilesImg, fr, c.x, c.y, c.w, c.h);
+  });
+
+  // собака
+  const dogFrame = dog.animFrame === 0 ? DOG_FRAME : DOG_FRAME2;
+  drawSprite(enemiesImg, dogFrame, dog.x - dog.w/2, dog.y - dog.h/2, dog.w, dog.h);
+
+  // частицы
+  particles.forEach(p => {
+    ctx.globalAlpha = p.life / 20;
+    ctx.fillStyle = p.color;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 3, 0, Math.PI*2);
+    ctx.fill();
+  });
+  ctx.globalAlpha = 1;
+
+  // игрок — кадр полёта с огнём
+  const playerFrame = PLAYER_FRAMES.fly[Math.floor(Date.now()/150) % 2];
+  ctx.save();
+  ctx.shadowColor = '#ffb400';
+  ctx.shadowBlur = 20;
+  drawSprite(playerImg, playerFrame, player.x - player.w/2, player.y - player.h/2, player.w, player.h);
+  ctx.restore();
+}
+
+// ========================
+// УПРАВЛЕНИЕ
+// ========================
+canvas.addEventListener('touchstart', e => {
+  e.preventDefault();
+  fingerX = e.touches[0].clientX;
+  hintEl.classList.add('hidden');
+}, { passive:false });
+canvas.addEventListener('touchmove', e => {
+  e.preventDefault();
+  fingerX = e.touches[0].clientX;
+}, { passive:false });
+canvas.addEventListener('touchend', e => {
+  e.preventDefault();
+  fingerX = null;
+}, { passive:false });
+
+// Мышь для теста на ПК
+canvas.addEventListener('mousedown', e => { fingerX = e.clientX; });
+canvas.addEventListener('mousemove', e => { if (fingerX !== null) fingerX = e.clientX; });
+canvas.addEventListener('mouseup', () => { fingerX = null; });
+
+startBtn.onclick = () => {
+  startScreen.classList.add('hidden');
+  initGame();
+};
+
+restartBtn.onclick = () => {
+  gameOverScreen.classList.add('hidden');
+  initGame();
+};
+
+pauseBtn.onclick = () => {
+  if (running) { running = false; }
+  else { running = true; lastTime = 0; requestAnimationFrame(loop); }
+};
 </script>
 </body>
 </html>
