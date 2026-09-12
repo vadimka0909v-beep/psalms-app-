@@ -1,620 +1,609 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>Библиотека Псалмов</title>
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <style>
-    :root {
-      --bg-color: #0e1621;
-      --card-bg: #17212b;
-      --accent-gold: #e5b869;
-      --accent-blue: #3390ec;
-      --text-main: #f5f5f7;
-      --text-sub: #7f91a4;
-      --shadow-color: rgba(0, 0, 0, 0.4);
-      --font-size-text: 17px;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Заявка</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0B0E1A;
+    --bg-elevated:#12182B;
+    --bg-card:#1A2138;
+    --bg-card-hover:#212A46;
+    --accent:#6C5CE7;
+    --accent-2:#00D9C0;
+    --accent-warm:#FF7A59;
+    --text:#F1F2F8;
+    --text-muted:#8991B3;
+    --border:#262F4C;
+    --radius-tail: 26px 26px 26px 6px;
+    --font-head:'Space Grotesk',sans-serif;
+    --font-body:'Manrope',sans-serif;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;height:100%;}
+  body{
+    background:var(--bg);
+    background-image:
+      radial-gradient(circle at 15% 0%, rgba(108,92,231,0.18), transparent 45%),
+      radial-gradient(circle at 90% 20%, rgba(0,217,192,0.12), transparent 40%);
+    color:var(--text);
+    font-family:var(--font-body);
+    overflow:hidden;
+    -webkit-user-select:none; user-select:none;
+  }
+  #app{
+    position:relative;
+    height:100vh;
+    height:100dvh;
+    max-width:520px;
+    margin:0 auto;
+    display:flex;
+    flex-direction:column;
+    padding:18px 20px calc(20px + env(safe-area-inset-bottom));
+  }
 
-    * {
-      box-sizing: border-box;
-      -webkit-tap-highlight-color: transparent;
-    }
+  /* ---------- top bar / progress ---------- */
+  .topbar{display:flex; align-items:center; gap:10px; margin-bottom:22px; min-height:34px;}
+  .back-btn{
+    width:34px;height:34px;border-radius:50%;
+    background:var(--bg-card); border:1px solid var(--border);
+    display:flex;align-items:center;justify-content:center;
+    color:var(--text-muted); flex-shrink:0; cursor:pointer;
+    transition:opacity .2s, transform .15s;
+  }
+  .back-btn:active{transform:scale(.9);}
+  .back-btn.hidden{visibility:hidden;}
+  .progress-track{flex:1; display:flex; gap:5px;}
+  .progress-seg{flex:1; height:4px; border-radius:3px; background:var(--border); overflow:hidden; position:relative;}
+  .progress-seg::after{
+    content:''; position:absolute; inset:0; border-radius:3px;
+    background:linear-gradient(90deg,var(--accent),var(--accent-2));
+    transform:translateX(-100%); transition:transform .5s cubic-bezier(.65,0,.35,1);
+  }
+  .progress-seg.filled::after{transform:translateX(0);}
+  .step-count{font-size:12px; color:var(--text-muted); font-variant-numeric:tabular-nums; flex-shrink:0;}
 
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
-      background-color: var(--bg-color);
-      color: var(--text-main);
-      margin: 0;
-      padding: 16px;
-      min-height: 100vh;
-      user-select: none;
-    }
+  /* ---------- screens ---------- */
+  .screens{flex:1; position:relative; overflow:hidden;}
+  .screen{
+    position:absolute; inset:0;
+    display:flex; flex-direction:column;
+    opacity:0; transform:translateX(24px);
+    pointer-events:none;
+    transition:opacity .35s ease, transform .35s cubic-bezier(.65,0,.35,1);
+  }
+  .screen.active{opacity:1; transform:translateX(0); pointer-events:auto;}
+  .screen.leaving-back{transform:translateX(-24px);}
+  .screen-body{flex:1; overflow-y:auto; padding-bottom:12px; -ms-overflow-style:none; scrollbar-width:none;}
+  .screen-body::-webkit-scrollbar{display:none;}
 
-    /* Шапка приложения */
-    .top-bar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 16px;
-    }
+  h1.step-title{font-family:var(--font-head); font-size:26px; line-height:1.15; margin:0 0 6px; font-weight:600;}
+  p.step-help{color:var(--text-muted); font-size:14.5px; line-height:1.5; margin:0 0 22px; max-width:38ch;}
 
-    .app-title-container {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
+  /* ---------- option cards ---------- */
+  .card-grid{display:flex; flex-direction:column; gap:10px;}
+  .opt-card{
+    display:flex; align-items:center; gap:14px;
+    background:var(--bg-card); border:1.5px solid var(--border);
+    border-radius:var(--radius-tail);
+    padding:16px 16px;
+    cursor:pointer;
+    transition:border-color .2s, background .2s, transform .12s;
+  }
+  .opt-card:active{transform:scale(.985);}
+  .opt-card.selected{
+    border-color:var(--accent);
+    background:linear-gradient(135deg, rgba(108,92,231,0.16), rgba(0,217,192,0.08));
+    box-shadow:0 0 0 1px rgba(108,92,231,.35), 0 8px 24px -8px rgba(108,92,231,.5);
+  }
+  .opt-icon{
+    width:38px;height:38px; flex-shrink:0; border-radius:12px;
+    display:flex;align-items:center;justify-content:center;
+    background:var(--bg-elevated); color:var(--accent-2);
+  }
+  .opt-card.selected .opt-icon{background:rgba(108,92,231,.2); color:#fff;}
+  .opt-text{flex:1;}
+  .opt-title{font-size:15.5px; font-weight:600; margin:0 0 2px;}
+  .opt-sub{font-size:12.5px; color:var(--text-muted); margin:0;}
+  .opt-check{
+    width:20px;height:20px; border-radius:50%; border:1.5px solid var(--border);
+    flex-shrink:0; display:flex;align-items:center;justify-content:center;
+  }
+  .opt-card.selected .opt-check{background:var(--accent); border-color:var(--accent);}
+  .opt-check svg{opacity:0; transition:opacity .15s;}
+  .opt-card.selected .opt-check svg{opacity:1;}
 
-    .app-title {
-      font-size: 20px;
-      font-weight: 700;
-      letter-spacing: -0.3px;
-      margin: 0;
-      background: linear-gradient(135deg, #ffffff 0%, #b0c4de 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
+  /* ---------- textarea ---------- */
+  textarea, input[type=text]{
+    width:100%; background:var(--bg-card); border:1.5px solid var(--border);
+    border-radius:18px; color:var(--text); font-family:var(--font-body);
+    font-size:15px; padding:16px; resize:none; outline:none;
+    transition:border-color .2s;
+  }
+  textarea:focus, input[type=text]:focus{border-color:var(--accent);}
+  textarea::placeholder, input::placeholder{color:var(--text-muted);}
+  textarea{min-height:130px;}
 
-    .lang-switcher {
-      background: var(--card-bg);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      color: var(--accent-gold);
-      padding: 6px 14px;
-      border-radius: 20px;
-      font-weight: 700;
-      font-size: 13px;
-      cursor: pointer;
-      box-shadow: 0 2px 8px var(--shadow-color);
-      transition: all 0.2s ease;
-    }
+  /* ---------- budget slider ---------- */
+  .budget-display{text-align:center; margin:10px 0 34px;}
+  .budget-value{font-family:var(--font-head); font-size:46px; font-weight:700; letter-spacing:-.5px;
+    background:linear-gradient(90deg,var(--accent-2),var(--accent)); -webkit-background-clip:text; background-clip:text; color:transparent;}
+  .budget-label{font-size:13px; color:var(--text-muted); margin-top:2px;}
+  input[type=range]{
+    -webkit-appearance:none; width:100%; height:8px; border-radius:6px;
+    background:var(--border); outline:none; margin:0 0 14px;
+  }
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none; width:26px; height:26px; border-radius:50%;
+    background:#fff; border:5px solid var(--accent); cursor:pointer;
+    box-shadow:0 4px 12px rgba(108,92,231,.5);
+  }
+  .budget-ticks{display:flex; justify-content:space-between; font-size:11.5px; color:var(--text-muted);}
 
-    .lang-switcher:active {
-      transform: scale(0.95);
-    }
+  /* ---------- calendar ---------- */
+  .section-label{font-size:13px; color:var(--text-muted); font-weight:600; margin:0 0 10px;}
+  .day-row{display:flex; gap:8px; overflow-x:auto; padding-bottom:6px; margin-bottom:24px;}
+  .day-row::-webkit-scrollbar{display:none;}
+  .day-card{
+    flex:0 0 auto; width:58px; padding:12px 0; border-radius:18px;
+    background:var(--bg-card); border:1.5px solid var(--border);
+    display:flex; flex-direction:column; align-items:center; gap:4px; cursor:pointer;
+  }
+  .day-card.selected{border-color:var(--accent-2); background:rgba(0,217,192,.12); box-shadow:0 0 0 1px rgba(0,217,192,.35);}
+  .day-wd{font-size:11.5px; color:var(--text-muted); text-transform:lowercase;}
+  .day-num{font-family:var(--font-head); font-size:19px; font-weight:600;}
+  .time-row{display:flex; gap:8px; margin-bottom:24px;}
+  .time-pill{
+    flex:1; text-align:center; padding:12px 0; border-radius:14px;
+    background:var(--bg-card); border:1.5px solid var(--border);
+    font-size:14px; cursor:pointer; color:var(--text-muted);
+  }
+  .time-pill.selected{border-color:var(--accent); color:var(--text); background:rgba(108,92,231,.14);}
+  .contact-toggle{display:flex; background:var(--bg-card); border:1.5px solid var(--border); border-radius:16px; padding:4px;}
+  .contact-opt{flex:1; text-align:center; padding:10px 0; border-radius:12px; font-size:14px; color:var(--text-muted); cursor:pointer; transition:background .2s,color .2s;}
+  .contact-opt.selected{background:linear-gradient(90deg,var(--accent),var(--accent-2)); color:#0B0E1A; font-weight:700;}
 
-    /* Поисковая строка */
-    .search-wrapper {
-      position: relative;
-      margin-bottom: 20px;
-    }
+  /* ---------- contact form ---------- */
+  .field{margin-bottom:14px;}
+  .field label{display:block; font-size:12.5px; color:var(--text-muted); margin-bottom:6px; font-weight:600;}
+  .username-chip{
+    display:flex; align-items:center; gap:8px; background:var(--bg-card);
+    border:1.5px solid var(--border); border-radius:14px; padding:14px 16px; color:var(--text-muted);
+  }
+  .username-chip b{color:var(--text); font-weight:600;}
 
-    .search-input {
-      width: 100%;
-      padding: 14px 16px 14px 44px;
-      border-radius: 14px;
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      background: var(--card-bg);
-      color: var(--text-main);
-      font-size: 15px;
-      outline: none;
-      box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
-    }
+  /* ---------- CTA ---------- */
+  .cta{
+    width:100%; padding:17px; border:none; border-radius:20px;
+    font-family:var(--font-body); font-size:16px; font-weight:700;
+    background:linear-gradient(90deg,var(--accent),var(--accent-2));
+    color:#0B0E1A; cursor:pointer; margin-top:auto;
+    transition:opacity .2s, transform .12s;
+  }
+  .cta:active{transform:scale(.98);}
+  .cta:disabled{opacity:.35; pointer-events:none;}
+  .cta-ghost{background:var(--bg-card); color:var(--text); border:1.5px solid var(--border);}
 
-    .search-icon {
-      position: absolute;
-      left: 14px;
-      top: 50%;
-      transform: translateY(-50%);
-      font-size: 18px;
-      opacity: 0.5;
-    }
+  /* ---------- welcome ---------- */
+  .welcome{flex:1; display:flex; flex-direction:column; justify-content:center; align-items:flex-start;}
+  .welcome-badge{
+    width:64px;height:64px;border-radius:var(--radius-tail);
+    background:linear-gradient(135deg,var(--accent),var(--accent-2));
+    display:flex;align-items:center;justify-content:center; margin-bottom:22px;
+    box-shadow:0 12px 32px -10px rgba(108,92,231,.6);
+  }
+  .welcome h1{font-family:var(--font-head); font-size:32px; line-height:1.15; margin:0 0 12px;}
+  .welcome p{color:var(--text-muted); font-size:15px; line-height:1.55; margin:0 0 30px; max-width:34ch;}
+  .welcome-meta{display:flex; gap:18px; margin-bottom:36px;}
+  .welcome-meta div{font-size:12px; color:var(--text-muted);}
+  .welcome-meta b{display:block; font-family:var(--font-head); font-size:20px; color:var(--text); font-weight:600;}
 
-    /* Сетка Книг (Дизайн в форме обложек) */
-    .books-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 16px;
-    }
+  /* ---------- final ---------- */
+  .final{flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; position:relative;}
+  .check-circle{
+    width:88px;height:88px;border-radius:50%; margin-bottom:26px;
+    background:radial-gradient(circle,rgba(0,217,192,.18),transparent 70%);
+    display:flex;align-items:center;justify-content:center;
+    position:relative;
+  }
+  .check-circle svg{width:44px;height:44px;}
+  .check-circle svg path{
+    stroke-dasharray:40; stroke-dashoffset:40;
+    animation:draw .5s .2s ease forwards;
+  }
+  @keyframes draw{to{stroke-dashoffset:0;}}
+  .final h1{font-family:var(--font-head); font-size:24px; margin:0 0 10px;}
+  .final p{color:var(--text-muted); font-size:14.5px; line-height:1.55; max-width:30ch; margin:0 0 30px;}
+  .confetti-piece{position:absolute; top:-10px; border-radius:2px; opacity:0; animation:fall 1.6s ease-in forwards;}
+  @keyframes fall{
+    0%{opacity:1; transform:translateY(0) rotate(0deg);}
+    100%{opacity:0; transform:translateY(340px) rotate(240deg);}
+  }
 
-    .book-cover {
-      position: relative;
-      aspect-ratio: 1 / 1.35;
-      border-radius: 12px 16px 16px 12px;
-      padding: 16px 12px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      cursor: pointer;
-      box-shadow: -4px 6px 16px var(--shadow-color), inset -2px 0 5px rgba(255,255,255,0.1);
-      border-left: 6px solid rgba(0, 0, 0, 0.35);
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
-      overflow: hidden;
-    }
-
-    .book-cover::after {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(0,0,0,0.3) 100%);
-      pointer-events: none;
-    }
-
-    .book-cover:active {
-      transform: scale(0.97);
-    }
-
-    /* Градиенты для обложек */
-    .bg-book-0 { background: linear-gradient(145deg, #2c3e50, #1a252f); border-left-color: #e5b869; }
-    .bg-book-1 { background: linear-gradient(145deg, #1e3c72, #2a5298); border-left-color: #4a90e2; }
-    .bg-book-2 { background: linear-gradient(145deg, #4a154b, #2b092b); border-left-color: #e056fd; }
-    .bg-book-3 { background: linear-gradient(145deg, #11998e, #38ef7d); border-left-color: #ffffff; }
-    .bg-book-4 { background: linear-gradient(145deg, #d35400, #e67e22); border-left-color: #f1c40f; }
-    .bg-book-5 { background: linear-gradient(145deg, #8e44ad, #9b59b6); border-left-color: #f39c12; }
-
-    .book-title {
-      font-size: 16px;
-      font-weight: 700;
-      line-height: 1.3;
-      z-index: 1;
-      color: #ffffff;
-      text-shadow: 0 2px 4px rgba(0,0,0,0.6);
-    }
-
-    .book-footer {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      z-index: 1;
-      font-size: 12px;
-      opacity: 0.9;
-    }
-
-    .book-badge {
-      background: rgba(0, 0, 0, 0.4);
-      padding: 3px 8px;
-      border-radius: 10px;
-      font-size: 11px;
-      backdrop-filter: blur(4px);
-    }
-
-    /* Список Песен */
-    .song-list {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    .song-card {
-      background: var(--card-bg);
-      padding: 14px 16px;
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      cursor: pointer;
-      border: 1px solid rgba(255, 255, 255, 0.05);
-      box-shadow: 0 2px 8px var(--shadow-color);
-      transition: background 0.15s ease;
-    }
-
-    .song-card:active {
-      background: rgba(51, 144, 236, 0.15);
-      border-color: var(--accent-blue);
-    }
-
-    .song-num {
-      background: linear-gradient(135deg, var(--accent-blue), #1e60a3);
-      color: #ffffff;
-      font-weight: 700;
-      font-size: 13px;
-      padding: 6px 10px;
-      border-radius: 8px;
-      min-width: 42px;
-      text-align: center;
-    }
-
-    .song-info {
-      flex: 1;
-      overflow: hidden;
-    }
-
-    .song-name {
-      font-size: 15px;
-      font-weight: 600;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      margin-bottom: 2px;
-    }
-
-    .song-preview {
-      font-size: 12px;
-      color: var(--text-sub);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    /* Чтение Песни */
-    .reader-container {
-      background: var(--card-bg);
-      padding: 20px;
-      border-radius: 16px;
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      box-shadow: 0 4px 16px var(--shadow-color);
-    }
-
-    .reader-header {
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-      padding-bottom: 14px;
-      margin-bottom: 16px;
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-    }
-
-    .reader-title {
-      font-size: 19px;
-      font-weight: 700;
-      color: var(--accent-gold);
-      margin: 0 0 6px 0;
-    }
-
-    .reader-meta {
-      font-size: 13px;
-      color: var(--text-sub);
-    }
-
-    .font-controls {
-      display: flex;
-      gap: 6px;
-    }
-
-    .font-btn {
-      background: rgba(255,255,255,0.08);
-      border: none;
-      color: var(--text-main);
-      padding: 4px 10px;
-      border-radius: 6px;
-      font-weight: bold;
-      cursor: pointer;
-    }
-
-    .lyrics-text {
-      white-space: pre-wrap;
-      font-family: inherit;
-      font-size: var(--font-size-text);
-      line-height: 1.65;
-      margin: 0;
-      color: #e6ecf2;
-      user-select: text;
-    }
-
-    .reader-nav {
-      display: flex;
-      justify-content: space-between;
-      margin-top: 20px;
-      gap: 10px;
-    }
-
-    .nav-btn {
-      flex: 1;
-      background: rgba(255, 255, 255, 0.06);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      color: var(--text-main);
-      padding: 12px;
-      border-radius: 10px;
-      font-weight: 600;
-      font-size: 14px;
-      cursor: pointer;
-      text-align: center;
-    }
-
-    .nav-btn:active {
-      background: var(--accent-blue);
-    }
-
-    .action-btn-bar {
-      display: flex;
-      justify-content: center;
-      margin-top: 14px;
-    }
-
-    .action-btn {
-      background: transparent;
-      border: none;
-      color: var(--accent-blue);
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-    }
-
-    .empty-msg {
-      text-align: center;
-      padding: 40px 20px;
-      color: var(--text-sub);
-    }
-
-    .back-btn-inline {
-      background: rgba(255,255,255,0.08);
-      border: none;
-      color: var(--text-main);
-      padding: 6px 12px;
-      border-radius: 8px;
-      font-size: 13px;
-      cursor: pointer;
-      margin-right: 8px;
-    }
-  </style>
+  @media (prefers-reduced-motion: reduce){
+    .screen, .progress-seg::after, .check-circle svg path, .confetti-piece{transition:none !important; animation:none !important;}
+  }
+</style>
 </head>
 <body>
+<div id="app">
 
-  <!-- Верхняя панель -->
-  <div class="top-bar">
-    <div class="app-title-container">
-      <button id="inlineBackBtn" class="back-btn-inline" style="display:none;" onclick="goBack()">←</button>
-      <h1 class="app-title" id="headerTitle">📖 Сборники</h1>
+  <div class="topbar" id="topbar" style="display:none;">
+    <div class="back-btn" id="backBtn">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
     </div>
-    <button class="lang-switcher" id="langBtn" onclick="toggleLang()">🇺🇦 UA</button>
+    <div class="progress-track" id="progressTrack"></div>
+    <div class="step-count" id="stepCount"></div>
   </div>
 
-  <!-- Поиск -->
-  <div class="search-wrapper">
-    <span class="search-icon">🔍</span>
-    <input type="text" id="searchInput" class="search-input" placeholder="Поиск по номеру, названию или тексту..." oninput="handleSearch()">
-  </div>
+  <div class="screens" id="screens">
 
-  <!-- Главный контейнер контента -->
-  <div id="appContent">
-    <div class="empty-msg">Загрузка песнопений...</div>
-  </div>
-
-  <script>
-    const tg = window.Telegram.WebApp;
-    if (tg) {
-      tg.ready();
-      tg.expand();
-      if (tg.BackButton) {
-        tg.BackButton.onClick(() => goBack());
-      }
-    }
-
-    let currentLang = 'ru';
-    let songsData = [];
-    let currentFontSize = 17;
-    let viewHistory = [{ view: 'home' }];
-
-    const booksRu = ["Псалмы Сиона", "Песни Юности", "Горлица", "Мы поём Господу", "Голосок хваления", "Мелодия юных сердец"];
-    const booksUa = ["Псалми Сіону", "Пісні Юності", "Горлиця", "Ми співаємо Господу", "Голосок хваління", "Мелодія юних сердець"];
-
-    // Резервная встроенная база на случай ошибки загрузки внешнего файла
-    const fallbackSongs = [
-      { id: 1, number: 1, book: "Псалмы Сиона", title_ru: "Славьте Бога", title_ua: "Славте Бога", text_ru: "Славьте Бога Владыку Вселенной!\nОн дарует нам радость и мир.", text_ua: "Славте Бога Владику Всесвіту!\nВін дарує нам радість і мир." },
-      { id: 2, number: 2, book: "Псалмы Сиона", title_ru: "Тихий вечер", title_ua: "Тихий вечір", text_ru: "Тихий вечер спустился на землю,\nБожий мир заполняет сердца.", text_ua: "Тихий вечір спустився на землю,\nБожий мир наповняє серця." },
-      { id: 3, number: 1, book: "Песни Юности", title_ru: "Юность светлая", title_ua: "Юність світла", text_ru: "Юность светлая, время прекрасное,\nПосвяти свои годы Христу.", text_ua: "Юність світла, час прекрасний,\nПрисвяти свої роки Христу." },
-      { id: 4, number: 1, book: "Горлица", title_ru: "Крылья веры", title_ua: "Крила віри", text_ru: "Дай мне крылья веры, Господь мой,\nЧтоб парить над житейской суетой.", text_ua: "Дай мені крила віри, Господь мій,\nЩоб парити над життєвою суєтою." }
-    ];
-
-    // Загрузка файла JSON
-    fetch('songs_multilingual.json?v=' + Date.now())
-      .then(r => r.json())
-      .then(data => {
-        songsData = Array.isArray(data) ? data : (data.songs || fallbackSongs);
-        if (!songsData.length) songsData = fallbackSongs;
-        renderHome();
-      })
-      .catch(() => {
-        songsData = fallbackSongs;
-        renderHome();
-      });
-
-    // Хелперы нормализации данных
-    function getBook(s) { return s.book || s.collection || s.book_name || ''; }
-    function getNum(s) { return s.number || s.num || s.id || 1; }
-    function getTitle(s) { return currentLang === 'ru' ? (s.title_ru || s.title || s.title_ua || 'Песнь') : (s.title_ua || s.title_ru || s.title || 'Пісня'); }
-    function getText(s) { return currentLang === 'ru' ? (s.text_ru || s.text || s.text_ua || s.lyrics || '') : (s.text_ua || s.text_ru || s.text || s.lyrics || ''); }
-
-    // Переключение языка
-    function toggleLang() {
-      currentLang = currentLang === 'ru' ? 'ua' : 'ru';
-      document.getElementById('langBtn').innerText = currentLang === 'ru' ? '🇺🇦 UA' : '🇷🇺 RU';
-      document.getElementById('searchInput').placeholder = currentLang === 'ru' ? 'Поиск по номеру, названию или тексту...' : 'Пошук за номером, назвою або текстом...';
-      
-      const current = viewHistory[viewHistory.length - 1];
-      if (current.view === 'home') renderHome(false);
-      else if (current.view === 'book') renderBook(current.bookRu, false);
-      else if (current.view === 'song') renderSong(current.song, false);
-      else if (current.view === 'search') handleSearch(false);
-    }
-
-    // Главный экран (Книги)
-    function renderHome(pushHistory = true) {
-      if (pushHistory) updateHistory({ view: 'home' });
-      setTitle(currentLang === 'ru' ? '📖 Сборники' : '📖 Збірники');
-      showBackBtn(false);
-
-      const books = currentLang === 'ru' ? booksRu : booksUa;
-      let html = '<div class="books-grid">';
-      
-      books.forEach((b, idx) => {
-        const bookRuName = booksRu[idx];
-        const count = songsData.filter(s => getBook(s).toLowerCase().includes(bookRuName.toLowerCase())).length || '50+';
-        html += `
-          <div class="book-cover bg-book-${idx}" onclick="openBook('${bookRuName}')">
-            <div class="book-title">${b}</div>
-            <div class="book-footer">
-              <span class="book-badge">${count} пс.</span>
-              <span>➔</span>
-            </div>
-          </div>
-        `;
-      });
-      
-      html += '</div>';
-      document.getElementById('appContent').innerHTML = html;
-    }
-
-    // Открыть сборник
-    function openBook(bookRuName) {
-      renderBook(bookRuName, true);
-    }
-
-    function renderBook(bookRuName, pushHistory = true) {
-      if (pushHistory) updateHistory({ view: 'book', bookRu: bookRuName });
-      
-      const bookIdx = booksRu.indexOf(bookRuName);
-      const displayBook = currentLang === 'ru' ? booksRu[bookIdx] : booksUa[bookIdx];
-      setTitle(displayBook);
-      showBackBtn(true);
-
-      let filtered = songsData.filter(s => {
-        const b = getBook(s).toLowerCase();
-        return b.includes(bookRuName.toLowerCase()) || bookRuName.toLowerCase().includes(b);
-      });
-
-      if (!filtered.length) filtered = songsData; // Показать имеющиеся песни если точного совпадения нет
-
-      let html = '<div class="song-list">';
-      filtered.forEach(s => {
-        const preview = getText(s).replace(/\n/g, ' ').substring(0, 50) + '...';
-        html += `
-          <div class="song-card" onclick="openSong(${songsData.indexOf(s)})">
-            <div class="song-num">№${getNum(s)}</div>
-            <div class="song-info">
-              <div class="song-name">${getTitle(s)}</div>
-              <div class="song-preview">${preview}</div>
-            </div>
-          </div>
-        `;
-      });
-      html += '</div>';
-      document.getElementById('appContent').innerHTML = html;
-    }
-
-    // Чтение песни
-    function openSong(globalIndex) {
-      renderSong(songsData[globalIndex], true);
-    }
-
-    function renderSong(song, pushHistory = true) {
-      if (pushHistory) updateHistory({ view: 'song', song: song });
-      
-      setTitle(`№${getNum(song)}`);
-      showBackBtn(true);
-
-      const currentIdx = songsData.indexOf(song);
-      const hasPrev = currentIdx > 0;
-      const hasNext = currentIdx < songsData.length - 1;
-
-      const html = `
-        <div class="reader-container">
-          <div class="reader-header">
-            <div>
-              <h2 class="reader-title">№${getNum(song)}. ${getTitle(song)}</h2>
-              <div class="reader-meta">${song.book || 'Сборник'}</div>
-            </div>
-            <div class="font-controls">
-              <button class="font-btn" onclick="changeFontSize(-1)">A-</button>
-              <button class="font-btn" onclick="changeFontSize(1)">A+</button>
-            </div>
-          </div>
-          
-          <pre class="lyrics-text" id="lyricsText">${getText(song)}</pre>
-
-          <div class="action-btn-bar">
-            <button class="action-btn" onclick="copyLyrics()">📋 Скопировать текст</button>
-          </div>
-
-          <div class="reader-nav">
-            <button class="nav-btn" ${hasPrev ? '' : 'disabled style="opacity:0.3"'} onclick="openSong(${currentIdx - 1})">← Пред.</button>
-            <button class="nav-btn" ${hasNext ? '' : 'disabled style="opacity:0.3"'} onclick="openSong(${currentIdx + 1})">След. →</button>
-          </div>
+    <!-- Screen 0: Welcome -->
+    <div class="screen active" data-screen="0">
+      <div class="welcome">
+        <div class="welcome-badge">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none"><path d="M21 5L2 12.5l6.5 2.5M21 5l-3.5 15-9-5M21 5L8.5 15" stroke="#0B0E1A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </div>
-      `;
-      document.getElementById('appContent').innerHTML = html;
-    }
+        <h1>Опишите задачу —<br>я отвечу лично</h1>
+        <p>Пара минут вместо долгой переписки. Ответьте на несколько вопросов, и заявка попадёт ко мне уже structured и готовой к работе.</p>
+        <div class="welcome-meta">
+          <div><b>~90 сек</b>время</div>
+          <div><b>6</b>коротких шагов</div>
+          <div><b>1 час</b>время ответа</div>
+        </div>
+      </div>
+      <button class="cta" id="startBtn">Начать</button>
+    </div>
 
-    // Поиск
-    function handleSearch(pushHistory = true) {
-      const q = document.getElementById('searchInput').value.trim().toLowerCase();
-      if (!q) {
-        renderHome(false);
-        return;
+    <!-- Screen 1: Topic -->
+    <div class="screen" data-screen="1">
+      <div class="screen-body">
+        <h1 class="step-title">С чем помочь?</h1>
+        <p class="step-help">Выберите направление — дальше подстроим вопросы под него.</p>
+        <div class="card-grid" id="topicGrid"></div>
+      </div>
+      <button class="cta" id="next1" disabled>Далее</button>
+    </div>
+
+    <!-- Screen 2: Details (dynamic) -->
+    <div class="screen" data-screen="2">
+      <div class="screen-body">
+        <h1 class="step-title" id="step2Title">Уточним детали</h1>
+        <p class="step-help" id="step2Help">Что из этого ближе всего к вашей задаче?</p>
+        <div class="card-grid" id="detailGrid"></div>
+        <textarea id="detailText" style="display:none" placeholder="В двух словах — с чем нужна помощь?"></textarea>
+      </div>
+      <button class="cta" id="next2" disabled>Далее</button>
+    </div>
+
+    <!-- Screen 3: Budget -->
+    <div class="screen" data-screen="3">
+      <div class="screen-body">
+        <h1 class="step-title">Ориентир по бюджету</h1>
+        <p class="step-help">Можно примерно — это просто чтобы предложить релевантный вариант.</p>
+        <div class="budget-display">
+          <div class="budget-value" id="budgetValue">$500</div>
+          <div class="budget-label">ожидаемый бюджет</div>
+        </div>
+        <input type="range" id="budgetSlider" min="0" max="6" step="1" value="2">
+        <div class="budget-ticks"><span>$50</span><span>$500</span><span>$1500</span><span>$5000+</span></div>
+      </div>
+      <button class="cta" id="next3">Далее</button>
+    </div>
+
+    <!-- Screen 4: Timing & contact -->
+    <div class="screen" data-screen="4">
+      <div class="screen-body">
+        <h1 class="step-title">Когда удобно связаться?</h1>
+        <p class="step-help">Выберите ближайший подходящий день и время.</p>
+        <div class="section-label">День</div>
+        <div class="day-row" id="dayRow"></div>
+        <div class="section-label">Время</div>
+        <div class="time-row" id="timeRow">
+          <div class="time-pill" data-time="morning">Утро</div>
+          <div class="time-pill" data-time="day">День</div>
+          <div class="time-pill" data-time="evening">Вечер</div>
+        </div>
+        <div class="section-label">Как удобнее</div>
+        <div class="contact-toggle" id="contactToggle">
+          <div class="contact-opt" data-c="telegram">Telegram</div>
+          <div class="contact-opt" data-c="call">Звонок</div>
+        </div>
+      </div>
+      <button class="cta" id="next4" disabled>Далее</button>
+    </div>
+
+    <!-- Screen 5: Comment -->
+    <div class="screen" data-screen="5">
+      <div class="screen-body">
+        <h1 class="step-title">Есть что добавить?</h1>
+        <p class="step-help" id="step5Help">Необязательно, но помогает подготовиться к разговору.</p>
+        <textarea id="commentText" placeholder="Например: хочу бота с приёмом оплаты и интеграцией CRM..."></textarea>
+      </div>
+      <button class="cta" id="next5">Далее</button>
+    </div>
+
+    <!-- Screen 6: Contacts -->
+    <div class="screen" data-screen="6">
+      <div class="screen-body">
+        <h1 class="step-title">Как к вам обращаться?</h1>
+        <p class="step-help">Последний шаг — и заявка улетит мне.</p>
+        <div class="field">
+          <label>Имя</label>
+          <input type="text" id="nameInput" placeholder="Ваше имя">
+        </div>
+        <div class="field">
+          <label>Telegram</label>
+          <div class="username-chip" id="usernameChip">определяется автоматически…</div>
+        </div>
+      </div>
+      <button class="cta" id="submitBtn" disabled>Отправить заявку</button>
+    </div>
+
+    <!-- Screen 7: Final -->
+    <div class="screen" data-screen="7">
+      <div class="final" id="finalScreen">
+        <div class="check-circle">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M4 12.5l5 5L20 6" stroke="#00D9C0" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <h1>Заявка отправлена</h1>
+        <p>Спасибо! Я посмотрю детали и отвечу вам в Telegram в течение часа.</p>
+        <button class="cta cta-ghost" id="closeBtn">Закрыть</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+(function(){
+  const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
+  if(tg){ tg.ready(); tg.expand(); }
+
+  const state = { topic:null, topicLabel:null, detail:null, budget:500, day:null, dayLabel:null,
+                  time:null, contact:'telegram', comment:'', name:'', username:null };
+
+  const TOTAL_STEPS = 6;
+  let current = 0;
+  let history = [0];
+
+  const screens = document.querySelectorAll('.screen');
+  const topbar = document.getElementById('topbar');
+  const progressTrack = document.getElementById('progressTrack');
+  const stepCount = document.getElementById('stepCount');
+  const backBtn = document.getElementById('backBtn');
+
+  for(let i=0;i<TOTAL_STEPS;i++){
+    const seg = document.createElement('div');
+    seg.className='progress-seg';
+    progressTrack.appendChild(seg);
+  }
+
+  function renderProgress(){
+    const segs = progressTrack.querySelectorAll('.progress-seg');
+    segs.forEach((s,i)=> s.classList.toggle('filled', i < current));
+    stepCount.textContent = current>=1 && current<=TOTAL_STEPS ? current+' / '+TOTAL_STEPS : '';
+  }
+
+  function goTo(idx, dir){
+    screens.forEach(s=>{
+      s.classList.remove('active','leaving-back');
+      if(parseInt(s.dataset.screen)===idx){
+        s.classList.add('active');
+        if(dir==='back') s.classList.add('leaving-back');
+        void s.offsetWidth;
+        s.classList.remove('leaving-back');
       }
+    });
+    current = idx;
+    topbar.style.display = (idx>=1 && idx<=TOTAL_STEPS) ? 'flex' : 'none';
+    backBtn.classList.toggle('hidden', idx<=1);
+    renderProgress();
+    if(idx===7) launchConfetti();
+  }
 
-      if (pushHistory && viewHistory[viewHistory.length - 1].view !== 'search') {
-        updateHistory({ view: 'search' });
-      }
+  function next(idx){ history.push(idx); goTo(idx,'fwd'); }
+  function back(){
+    if(history.length>1){ history.pop(); goTo(history[history.length-1],'back'); }
+  }
+  backBtn.addEventListener('click', back);
 
-      setTitle(currentLang === 'ru' ? 'Результаты' : 'Результати');
-      showBackBtn(true);
+  document.getElementById('startBtn').addEventListener('click', ()=> next(1));
 
-      const res = songsData.filter(s => {
-        const numStr = String(getNum(s));
-        const titleRu = (s.title_ru || '').toLowerCase();
-        const titleUa = (s.title_ua || '').toLowerCase();
-        const textRu = (s.text_ru || s.text || '').toLowerCase();
-        const textUa = (s.text_ua || s.lyrics || '').toLowerCase();
+  // ---- Step 1: Topic ----
+  const topics = [
+    {id:'bot', title:'Разработка бота', sub:'Telegram-боты под задачи', icon:'🤖'},
+    {id:'fx', title:'FX / Трейдинг', sub:'Сигналы, обучение, управление', icon:'📈'},
+    {id:'manager', title:'Консультация с менеджером', sub:'Обсудить задачу голосом или текстом', icon:'🧑\u200d💼'},
+    {id:'other', title:'Другое', sub:'Свой вопрос', icon:'✳️'},
+  ];
+  const topicGrid = document.getElementById('topicGrid');
+  topics.forEach(t=>{
+    const el = document.createElement('div');
+    el.className='opt-card'; el.dataset.id=t.id;
+    el.innerHTML = `<div class="opt-icon">${t.icon}</div>
+      <div class="opt-text"><p class="opt-title">${t.title}</p><p class="opt-sub">${t.sub}</p></div>
+      <div class="opt-check"><svg width="11" height="11" viewBox="0 0 24 24" fill="none"><path d="M4 12.5l5 5L20 6" stroke="#0B0E1A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>`;
+    el.addEventListener('click', ()=>{
+      topicGrid.querySelectorAll('.opt-card').forEach(c=>c.classList.remove('selected'));
+      el.classList.add('selected');
+      state.topic = t.id; state.topicLabel = t.title;
+      document.getElementById('next1').disabled = false;
+      buildStep2();
+    });
+    topicGrid.appendChild(el);
+  });
+  document.getElementById('next1').addEventListener('click', ()=> next(2));
 
-        return numStr === q || titleRu.includes(q) || titleUa.includes(q) || textRu.includes(q) || textUa.includes(q);
+  // ---- Step 2: dynamic details ----
+  const detailOptions = {
+    bot: {title:'Какой формат бота?', help:'Выберите ближайший вариант.', options:[
+      {id:'simple', title:'Простой бот', sub:'Ответы, кнопки, рассылки'},
+      {id:'payments', title:'Бот с оплатой', sub:'Приём платежей внутри чата'},
+      {id:'miniapp', title:'Mini App', sub:'Интерфейс внутри Telegram'},
+      {id:'unsure', title:'Нужна консультация', sub:'Пока не уверен(а) в формате'},
+    ]},
+    fx: {title:'Что интересует в трейдинге?', help:'Выберите ближайший вариант.', options:[
+      {id:'signals', title:'Сигналы', sub:'Готовые торговые идеи'},
+      {id:'education', title:'Обучение', sub:'Разбор стратегии и основ'},
+      {id:'capital', title:'Управление капиталом', sub:'Доверительное управление'},
+    ]},
+  };
+  const detailGrid = document.getElementById('detailGrid');
+  const detailText = document.getElementById('detailText');
+  const step2Title = document.getElementById('step2Title');
+  const step2Help = document.getElementById('step2Help');
+  const next2 = document.getElementById('next2');
+
+  function buildStep2(){
+    detailGrid.innerHTML=''; state.detail=null; next2.disabled = true;
+    const cfg = detailOptions[state.topic];
+    if(cfg){
+      detailGrid.style.display='flex'; detailText.style.display='none';
+      step2Title.textContent = cfg.title; step2Help.textContent = cfg.help;
+      cfg.options.forEach(o=>{
+        const el = document.createElement('div');
+        el.className='opt-card'; el.dataset.id=o.id;
+        el.innerHTML = `<div class="opt-text"><p class="opt-title">${o.title}</p><p class="opt-sub">${o.sub}</p></div>
+          <div class="opt-check"><svg width="11" height="11" viewBox="0 0 24 24" fill="none"><path d="M4 12.5l5 5L20 6" stroke="#0B0E1A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>`;
+        el.addEventListener('click', ()=>{
+          detailGrid.querySelectorAll('.opt-card').forEach(c=>c.classList.remove('selected'));
+          el.classList.add('selected');
+          state.detail = o.title; next2.disabled=false;
+        });
+        detailGrid.appendChild(el);
       });
-
-      if (!res.length) {
-        document.getElementById('appContent').innerHTML = `<div class="empty-msg">${currentLang === 'ru' ? 'Ничего не найдено' : 'Нічого не знайдено'}</div>`;
-        return;
-      }
-
-      let html = '<div class="song-list">';
-      res.forEach(s => {
-        html += `
-          <div class="song-card" onclick="openSong(${songsData.indexOf(s)})">
-            <div class="song-num">№${getNum(s)}</div>
-            <div class="song-info">
-              <div class="song-name">${getTitle(s)}</div>
-              <div class="song-preview">${getBook(s)}</div>
-            </div>
-          </div>
-        `;
-      });
-      html += '</div>';
-      document.getElementById('appContent').innerHTML = html;
+    } else {
+      detailGrid.style.display='none'; detailText.style.display='block';
+      step2Title.textContent = 'Расскажите подробнее'; step2Help.textContent = 'Пару предложений о задаче.';
+      detailText.value=''; next2.disabled = true;
+      detailText.oninput = ()=>{ state.detail = detailText.value.trim(); next2.disabled = state.detail.length===0; };
     }
+  }
+  next2.addEventListener('click', ()=> next(3));
 
-    // Размеры шрифта
-    function changeFontSize(delta) {
-      currentFontSize = Math.max(14, Math.min(26, currentFontSize + delta));
-      const el = document.getElementById('lyricsText');
-      if (el) el.style.fontSize = currentFontSize + 'px';
-    }
+  // ---- Step 3: budget ----
+  const budgetSteps = [50,150,500,1000,1500,3000,5000];
+  const budgetLabels = ['Минимальный','Стартовый','Средний','Расширенный','Продвинутый','Крупный','$5000+'];
+  const slider = document.getElementById('budgetSlider');
+  const budgetValue = document.getElementById('budgetValue');
+  function renderBudget(){
+    const v = budgetSteps[slider.value];
+    state.budget = v;
+    budgetValue.textContent = v>=5000 ? '$5000+' : '$'+v;
+    const t = slider.value/(budgetSteps.length-1);
+    const hue = 260 - t*90;
+    budgetValue.style.filter = 'hue-rotate(0deg)';
+  }
+  slider.addEventListener('input', renderBudget);
+  renderBudget();
+  document.getElementById('next3').addEventListener('click', ()=> next(4));
 
-    // Копирование текста
-    function copyLyrics() {
-      const text = document.getElementById('lyricsText')?.innerText;
-      if (text) {
-        navigator.clipboard.writeText(text);
-        if (tg && tg.showAlert) tg.showAlert('Текст скопирован!');
-        else alert('Текст скопирован!');
-      }
-    }
+  // ---- Step 4: day / time / contact ----
+  const dayRow = document.getElementById('dayRow');
+  const weekdays = ['вс','пн','вт','ср','чт','пт','сб'];
+  const next4 = document.getElementById('next4');
+  function checkStep4(){ next4.disabled = !(state.day && state.time && state.contact); }
+  for(let i=0;i<7;i++){
+    const d = new Date(); d.setDate(d.getDate()+i);
+    const el = document.createElement('div');
+    el.className='day-card';
+    el.innerHTML = `<div class="day-wd">${i===0?'сегодня':weekdays[d.getDay()]}</div><div class="day-num">${d.getDate()}</div>`;
+    el.addEventListener('click', ()=>{
+      dayRow.querySelectorAll('.day-card').forEach(c=>c.classList.remove('selected'));
+      el.classList.add('selected');
+      state.day = d.toISOString().slice(0,10);
+      state.dayLabel = (i===0?'сегодня':weekdays[d.getDay()]+' '+d.getDate());
+      checkStep4();
+    });
+    dayRow.appendChild(el);
+  }
+  document.querySelectorAll('.time-pill').forEach(p=>{
+    p.addEventListener('click', ()=>{
+      document.querySelectorAll('.time-pill').forEach(x=>x.classList.remove('selected'));
+      p.classList.add('selected'); state.time = p.dataset.time; checkStep4();
+    });
+  });
+  document.querySelectorAll('.contact-opt').forEach(p=>{
+    p.addEventListener('click', ()=>{
+      document.querySelectorAll('.contact-opt').forEach(x=>x.classList.remove('selected'));
+      p.classList.add('selected'); state.contact = p.dataset.c; checkStep4();
+    });
+  });
+  document.querySelector('.contact-opt[data-c="telegram"]').classList.add('selected');
+  document.getElementById('next4').addEventListener('click', ()=> next(5));
 
-    // Управление историями и кнопками Назад
-    function updateHistory(state) {
-      viewHistory.push(state);
-    }
+  // ---- Step 5: comment ----
+  const commentText = document.getElementById('commentText');
+  const step5Help = document.getElementById('step5Help');
+  commentText.addEventListener('input', ()=> state.comment = commentText.value.trim());
+  document.getElementById('next5').addEventListener('click', ()=> next(6));
 
-    function goBack() {
-      if (viewHistory.length > 1) {
-        viewHistory.pop();
-        const prev = viewHistory[viewHistory.length - 1];
-        if (prev.view === 'home') renderHome(false);
-        else if (prev.view === 'book') renderBook(prev.bookRu, false);
-        else if (prev.view === 'song') renderSong(prev.song, false);
-        else if (prev.view === 'search') handleSearch(false);
-      }
-    }
+  // ---- Step 6: contacts ----
+  const nameInput = document.getElementById('nameInput');
+  const usernameChip = document.getElementById('usernameChip');
+  const submitBtn = document.getElementById('submitBtn');
 
-    function setTitle(title) {
-      document.getElementById('headerTitle').innerText = title;
+  (function prefill(){
+    const u = tg && tg.initDataUnsafe && tg.initDataUnsafe.user;
+    if(u){
+      state.name = u.first_name || '';
+      nameInput.value = state.name;
+      if(u.username){ state.username = '@'+u.username; usernameChip.innerHTML = '<b>'+state.username+'</b>'; }
+      else { usernameChip.textContent = 'username не указан в Telegram'; }
+    } else {
+      usernameChip.textContent = 'откроется автоматически при запуске из бота';
     }
+    checkStep6();
+  })();
+  nameInput.addEventListener('input', ()=>{ state.name = nameInput.value.trim(); checkStep6(); });
+  function checkStep6(){ submitBtn.disabled = state.name.length===0; }
 
-    function showBackBtn(show) {
-      document.getElementById('inlineBackBtn').style.display = show ? 'inline-block' : 'none';
-      if (tg && tg.BackButton) {
-        if (show) tg.BackButton.show();
-        else tg.BackButton.hide();
-      }
+  submitBtn.addEventListener('click', ()=>{
+    const payload = {
+      topic: state.topicLabel,
+      detail: state.detail,
+      budget: state.budget,
+      day: state.dayLabel,
+      time: state.time,
+      contact_pref: state.contact,
+      comment: state.comment,
+      name: state.name,
+      username: state.username
+    };
+    if(tg){
+      tg.sendData(JSON.stringify(payload));
+    } else {
+      console.log('Заявка (тест вне Telegram):', payload);
     }
-  </script>
+    next(7);
+  });
+
+  document.getElementById('closeBtn').addEventListener('click', ()=>{
+    if(tg) tg.close(); else alert('В Telegram это закроет мини-апп.');
+  });
+
+  function launchConfetti(){
+    const colors = ['#6C5CE7','#00D9C0','#FF7A59'];
+    const holder = document.getElementById('finalScreen');
+    for(let i=0;i<24;i++){
+      const p = document.createElement('div');
+      p.className='confetti-piece';
+      const size = 6+Math.random()*5;
+      p.style.width=size+'px'; p.style.height=size+'px';
+      p.style.left=(10+Math.random()*80)+'%';
+      p.style.background=colors[i%colors.length];
+      p.style.animationDelay=(Math.random()*0.4)+'s';
+      p.style.borderRadius = Math.random()>0.5 ? '50%':'2px';
+      holder.appendChild(p);
+      setTimeout(()=>p.remove(), 2200);
+    }
+  }
+})();
+</script>
 </body>
 </html>
