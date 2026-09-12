@@ -56,7 +56,7 @@
   <p>Ты летишь вверх по подземелью.<br>
      Держи палец на экране — управляй влево-вправо.<br>
      Уворачивайся от шипов, пил, пауков и лазеров.<br>
-     Собака «БАТЯ» гонится снизу!</p>
+     Каждый удар приближает собаку «БАТЯ»!</p>
   <button class="btn" id="startBtn">НАЧАТЬ</button>
 </div>
 
@@ -99,7 +99,7 @@ const hintEl = document.getElementById('hint');
 try { window.Telegram?.WebApp?.ready(); window.Telegram?.WebApp?.expand(); } catch(e) {}
 
 // ========================
-// СОСТОЯНИЕ ИГРЫ
+// СОСТОЯНИЕ
 // ========================
 let player, dog, obstacles, coins, particles, decor;
 let score, coinsCollected, hearts;
@@ -107,10 +107,12 @@ let speed, running, gameOver, paused;
 let fingerX = null, fingerActive = false;
 let scrollY = 0;
 let spawnDist = 0, lastTime = 0;
+let DOG_DISTANCE = 380; // стартовая дистанция собаки
 
 function initGame() {
+  DOG_DISTANCE = 380;
   player = { x: CW/2, y: CH - 250, w: 40 };
-  dog = { x: CW/2, y: CH + 150, animTime: 0 };
+  dog = { x: CW/2, y: CH + 500, animTime: 0 };
   obstacles = [];
   coins = [];
   particles = [];
@@ -127,9 +129,8 @@ function initGame() {
   scrollY = 0;
   spawnDist = 0;
   lastTime = 0;
-  // декор: паутина на стенах
   for (let i = 0; i < 6; i++) {
-    decor.push({ x: Math.random() > 0.5 ? 20 : CW - 80, y: Math.random() * CH, side: Math.random() > 0.5 ? 1 : -1 });
+    decor.push({ x: Math.random() > 0.5 ? 25 : CW - 60, y: Math.random() * CH });
   }
   updateUI();
   requestAnimationFrame(loop);
@@ -168,18 +169,15 @@ function spawnCoin(y) {
 function loop(t) {
   if (!running) return;
   if (paused) { requestAnimationFrame(loop); return; }
-
   if (!lastTime) lastTime = t;
-  let dt = Math.min(50, t - lastTime) / 16.67; // нормализация к 60fps
+  let dt = Math.min(50, t - lastTime) / 16.67;
   lastTime = t;
-
   update(dt);
   render();
   requestAnimationFrame(loop);
 }
 
 function update(dt) {
-  // ускорение со временем
   speed += dt * 0.004;
   const move = speed * dt;
   scrollY += move;
@@ -191,10 +189,10 @@ function update(dt) {
   }
   player.x = Math.max(35, Math.min(CW-35, player.x));
 
-  // собака
+  // собака — держит фиксированную дистанцию позади
   dog.animTime += dt;
-  const dogSpeed = speed * (0.55 + Math.min(0.35, score * 0.0004));
-  dog.y -= dogSpeed * dt;
+  const targetDogY = player.y + DOG_DISTANCE;
+  dog.y += (targetDogY - dog.y) * 0.08 * dt;
   dog.x += (player.x - dog.x) * 0.02;
 
   // камера
@@ -219,13 +217,13 @@ function update(dt) {
 
   // препятствия
   obstacles.forEach(o => {
+    if (o.hit) return;
     if (o.type === 'saw') o.angle += dt * 0.15;
     if (o.type === 'laser') o.timer += dt * 0.06;
     if (o.type === 'spider') {
       o.x += o.vx * dt;
       if (o.x < 35 || o.x + o.w > CW - 35) o.vx *= -1;
     }
-    // коллизия
     if (o.type === 'laser') {
       o.on = Math.sin(o.timer) > 0.1;
       if (o.on && player.y + 22 > o.y && player.y - 22 < o.y + o.h) {
@@ -263,16 +261,12 @@ function update(dt) {
   particles.forEach(p => { p.x += p.vx; p.y += p.vy; p.vy += 0.15; p.life--; });
   particles = particles.filter(p => p.life > 0);
 
-  // собака догнала
-  if (dog.y < player.y + 25) {
-    endGame();
-  }
-
   updateUI();
 }
 
 function hitPlayer() {
   hearts--;
+  DOG_DISTANCE -= 110;
   for (let i=0; i<14; i++) {
     particles.push({
       x: player.x, y: player.y,
@@ -297,7 +291,6 @@ function endGame() {
 // РИСОВАНИЕ
 // ========================
 function render() {
-  // фон
   const grad = ctx.createLinearGradient(0, 0, 0, CH);
   grad.addColorStop(0, '#1a0505');
   grad.addColorStop(0.5, '#2a0a0a');
@@ -305,7 +298,7 @@ function render() {
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, CW, CH);
 
-  // кирпичи (бесшовно)
+  // кирпичи бесшовно
   const brickH = 22, brickW = 46;
   const off = scrollY % brickH;
   ctx.fillStyle = 'rgba(70,22,18,0.55)';
@@ -316,7 +309,6 @@ function render() {
       ctx.fillRect(x + shift + 1, y + 1, brickW - 2, brickH - 2);
     }
   }
-  // затемнение по краям
   ctx.fillStyle = 'rgba(0,0,0,0.35)';
   ctx.fillRect(0, 0, 15, CH);
   ctx.fillRect(CW - 15, 0, 15, CH);
@@ -384,22 +376,19 @@ function render() {
       ctx.restore();
     } else if (o.type === 'spider') {
       const cx = o.x + o.w/2, cy = o.y + o.h/2;
-      // лапы
       ctx.strokeStyle = '#2d7d2d';
       ctx.lineWidth = 2.5;
-      for (let i = 0; i < 4; i++) {
-        const a = -0.9 + i * 0.6;
-        const dir = i < 2 ? -1 : 1;
+      for (let i = 0; i < 3; i++) {
+        const off = i * 8;
         ctx.beginPath();
         ctx.moveTo(cx, cy);
-        ctx.lineTo(cx + Math.cos(a) * 22 * dir * (dir>0?1:-1) - 20, cy + Math.sin(a) * 16);
+        ctx.lineTo(cx - 22, cy - 12 + off);
         ctx.stroke();
         ctx.beginPath();
         ctx.moveTo(cx, cy);
-        ctx.lineTo(cx + Math.cos(a) * 22 * dir * (dir>0?1:-1) + 20, cy + Math.sin(a) * 16);
+        ctx.lineTo(cx + 22, cy - 12 + off);
         ctx.stroke();
       }
-      // тело
       ctx.fillStyle = '#3a9a3a';
       ctx.beginPath();
       ctx.ellipse(cx, cy, 14, 12, 0, 0, Math.PI * 2);
@@ -408,7 +397,6 @@ function render() {
       ctx.beginPath();
       ctx.ellipse(cx, cy - 8, 8, 6, 0, 0, Math.PI * 2);
       ctx.fill();
-      // глаза
       ctx.fillStyle = '#ff2222';
       ctx.beginPath();
       ctx.arc(cx - 5, cy - 6, 2.5, 0, Math.PI * 2);
@@ -425,7 +413,6 @@ function render() {
         ctx.fillRect(o.x, o.y + o.h/2 - 1, o.w, 2);
         ctx.restore();
       } else {
-        // намек на выключенный лазер
         ctx.fillStyle = 'rgba(255,0,68,0.15)';
         ctx.fillRect(o.x, o.y, o.w, o.h);
       }
@@ -473,14 +460,12 @@ function render() {
 }
 
 function drawPlayer(x, y) {
-  // свечение
   const g = ctx.createRadialGradient(x, y, 5, x, y, 45);
   g.addColorStop(0, 'rgba(255,200,50,0.6)');
   g.addColorStop(1, 'rgba(255,200,50,0)');
   ctx.fillStyle = g;
   ctx.fillRect(x - 50, y - 50, 100, 100);
 
-  // тело (куртка)
   ctx.fillStyle = '#1a1a2e';
   ctx.beginPath();
   ctx.roundRect(x - 14, y + 8, 28, 22, 5);
@@ -490,12 +475,11 @@ function drawPlayer(x, y) {
   ctx.roundRect(x - 16, y + 10, 32, 6, 3);
   ctx.fill();
 
-  // голова (круг с кожей)
   ctx.fillStyle = '#e8b88a';
   ctx.beginPath();
   ctx.arc(x, y - 8, 16, 0, Math.PI * 2);
   ctx.fill();
-  // волосы
+
   ctx.fillStyle = '#4a2c18';
   ctx.beginPath();
   ctx.arc(x, y - 12, 16, Math.PI, Math.PI * 2);
@@ -504,20 +488,19 @@ function drawPlayer(x, y) {
   ctx.arc(x - 12, y - 10, 8, 0, Math.PI * 2);
   ctx.arc(x + 12, y - 10, 8, 0, Math.PI * 2);
   ctx.fill();
-  // глаза
+
   ctx.fillStyle = '#000';
   ctx.beginPath();
   ctx.arc(x - 5, y - 6, 1.8, 0, Math.PI * 2);
   ctx.arc(x + 5, y - 6, 1.8, 0, Math.PI * 2);
   ctx.fill();
-  // улыбка
+
   ctx.strokeStyle = '#7a3a1a';
   ctx.lineWidth = 1.4;
   ctx.beginPath();
   ctx.arc(x, y, 4, 0.2 * Math.PI, 0.8 * Math.PI);
   ctx.stroke();
 
-  // огонь реактивный под ногами
   const f = Math.random() * 4;
   ctx.fillStyle = '#ff8800';
   ctx.beginPath();
@@ -536,13 +519,11 @@ function drawPlayer(x, y) {
 }
 
 function drawDog(x, y) {
-  // тень
   ctx.fillStyle = 'rgba(0,0,0,0.4)';
   ctx.beginPath();
   ctx.ellipse(x, y + 22, 38, 8, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  // тело
   ctx.fillStyle = '#3a1a0a';
   ctx.beginPath();
   ctx.roundRect(x - 40, y - 20, 80, 40, 12);
@@ -552,12 +533,10 @@ function drawDog(x, y) {
   ctx.roundRect(x - 40, y + 5, 80, 18, 8);
   ctx.fill();
 
-  // голова
   ctx.fillStyle = '#3a1a0a';
   ctx.beginPath();
   ctx.arc(x - 34, y - 12, 20, 0, Math.PI * 2);
   ctx.fill();
-  // уши
   ctx.beginPath();
   ctx.moveTo(x - 46, y - 28);
   ctx.lineTo(x - 52, y - 44);
@@ -570,12 +549,12 @@ function drawDog(x, y) {
   ctx.lineTo(x - 16, y - 30);
   ctx.closePath();
   ctx.fill();
-  // морда
+
   ctx.fillStyle = '#5a2a10';
   ctx.beginPath();
   ctx.ellipse(x - 42, y - 6, 12, 10, 0, 0, Math.PI * 2);
   ctx.fill();
-  // глаза
+
   ctx.fillStyle = '#ffdd00';
   ctx.beginPath();
   ctx.arc(x - 38, y - 16, 3, 0, Math.PI * 2);
@@ -586,7 +565,7 @@ function drawDog(x, y) {
   ctx.arc(x - 38, y - 16, 1.4, 0, Math.PI * 2);
   ctx.arc(x - 26, y - 16, 1.4, 0, Math.PI * 2);
   ctx.fill();
-  // клыки
+
   ctx.fillStyle = '#fff';
   ctx.beginPath();
   ctx.moveTo(x - 48, y - 2);
@@ -598,7 +577,7 @@ function drawDog(x, y) {
   ctx.lineTo(x - 32, y - 2);
   ctx.closePath();
   ctx.fill();
-  // лапы
+
   ctx.fillStyle = '#2a1005';
   const legOff = Math.sin(dog.animTime * 0.4) * 3;
   ctx.fillRect(x - 32, y + 12 + legOff, 10, 12);
@@ -606,7 +585,6 @@ function drawDog(x, y) {
   ctx.fillRect(x + 12, y + 12 + legOff, 10, 12);
   ctx.fillRect(x + 30, y + 12 - legOff, 10, 12);
 
-  // табличка "БАТЯ"
   ctx.fillStyle = '#ffffff';
   ctx.font = 'bold 11px sans-serif';
   ctx.textAlign = 'center';
@@ -655,4 +633,4 @@ pauseBtn.onclick = () => {
 };
 </script>
 </body>
- </html>
+</html>
