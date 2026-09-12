@@ -6,26 +6,36 @@
 <title>Побег из подземелья</title>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-  html, body { width:100%; height:100%; overflow:hidden; background:#0a0505; font-family:-apple-system, sans-serif; user-select:none; }
+  html, body { width:100%; height:100%; overflow:hidden; background:#0a0505;
+    font-family:-apple-system, sans-serif; user-select:none; }
   canvas { display:block; touch-action:none; }
   #ui { position:fixed; top:0; left:0; width:100%; pointer-events:none; z-index:10; padding:10px; }
-  #topBar { display:flex; justify-content:space-between; align-items:center; padding:0 8px; }
-  #scoreBox, #coinBox { color:#fff; font-size:20px; font-weight:900; text-shadow:0 0 6px #ffb400, 2px 2px 0 #000; display:flex; align-items:center; gap:6px; }
-  #scoreBox { color:#fff; }
-  #hearts { display:flex; gap:4px; font-size:22px; }
-  .heart { filter:drop-shadow(0 0 4px #ff0044); }
-  #pauseBtn { pointer-events:auto; font-size:26px; color:#fff; background:rgba(0,0,0,.5); border:2px solid #ffb400; border-radius:8px; width:44px; height:44px; display:flex; align-items:center; justify-content:center; cursor:pointer; }
+  #topBar { display:flex; justify-content:space-between; align-items:center; padding:0 8px; gap:8px; }
+  .box { color:#fff; font-size:18px; font-weight:900;
+    text-shadow:0 0 6px #ffb400, 2px 2px 0 #000;
+    display:flex; align-items:center; gap:4px; }
+  #hearts { display:flex; gap:3px; font-size:20px; }
+  #pauseBtn { pointer-events:auto; font-size:22px; color:#fff;
+    background:rgba(0,0,0,.6); border:2px solid #ffb400; border-radius:8px;
+    width:42px; height:42px; display:flex; align-items:center; justify-content:center; cursor:pointer; }
   #startScreen, #gameOverScreen {
-    position:fixed; inset:0; background:rgba(0,0,0,.85);
+    position:fixed; inset:0; background:rgba(0,0,0,.88);
     display:flex; flex-direction:column; align-items:center; justify-content:center;
     color:#fff; z-index:20; text-align:center; padding:20px;
   }
-  #startScreen h1, #gameOverScreen h1 { font-size:38px; color:#ffb400; text-shadow:0 0 15px #ff5500; margin-bottom:20px; letter-spacing:2px; }
-  #startScreen p, #gameOverScreen p { font-size:16px; opacity:.8; margin-bottom:30px; line-height:1.5; max-width:300px; }
-  .btn { background:linear-gradient(180deg,#ff5500,#aa2200); color:#fff; border:3px solid #ffb400; border-radius:12px; font-size:22px; font-weight:900; padding:14px 36px; cursor:pointer; text-shadow:1px 1px 0 #000; box-shadow:0 4px 0 #551100, 0 0 20px rgba(255,85,0,.5); }
+  #startScreen h1, #gameOverScreen h1 { font-size:36px; color:#ffb400;
+    text-shadow:0 0 15px #ff5500; margin-bottom:16px; letter-spacing:2px; }
+  #startScreen p, #gameOverScreen p { font-size:15px; opacity:.85;
+    margin-bottom:26px; line-height:1.6; max-width:320px; }
+  .btn { background:linear-gradient(180deg,#ff5500,#aa2200); color:#fff;
+    border:3px solid #ffb400; border-radius:12px; font-size:20px; font-weight:900;
+    padding:14px 36px; cursor:pointer; text-shadow:1px 1px 0 #000;
+    box-shadow:0 4px 0 #551100, 0 0 20px rgba(255,85,0,.5); }
   .btn:active { transform:translateY(3px); box-shadow:0 1px 0 #551100; }
-  #finalScore { font-size:28px; color:#ffb400; margin:10px 0 20px; }
-  #hint { position:fixed; bottom:30px; width:100%; text-align:center; color:rgba(255,255,255,.7); font-size:14px; pointer-events:none; z-index:15; animation:pulse 1.5s infinite; }
+  #finalScore { font-size:26px; color:#ffb400; margin:10px 0 18px; }
+  #hint { position:fixed; bottom:28px; width:100%; text-align:center;
+    color:rgba(255,255,255,.7); font-size:14px; pointer-events:none;
+    z-index:15; animation:pulse 1.5s infinite; }
   @keyframes pulse { 0%,100%{opacity:.3} 50%{opacity:1} }
   .hidden { display:none !important; }
 </style>
@@ -34,16 +44,19 @@
 <div id="ui">
   <div id="topBar">
     <div id="pauseBtn">⏸</div>
-    <div id="scoreBox">📏 <span id="scoreVal">0</span>м</div>
-    <div id="coinBox">🪙 <span id="coinVal">0</span></div>
-    <div id="hearts"><span class="heart">❤️</span><span class="heart">❤️</span><span class="heart">❤️</span></div>
+    <div class="box">📏 <span id="scoreVal">0</span>м</div>
+    <div class="box">🪙 <span id="coinVal">0</span></div>
+    <div id="hearts"><span>❤️</span><span>❤️</span><span>❤️</span></div>
   </div>
 </div>
 <div id="hint">Держи палец и води влево-вправо</div>
 
 <div id="startScreen">
   <h1>ПОБЕГ</h1>
-  <p>Персонаж летит вверх и ускоряется.<br>Держи палец на экране — управляй движением влево-вправо.<br>Избегай шипов, пил и лазеров.<br>Не дай собаке «БАТЯ» догнать тебя!</p>
+  <p>Ты летишь вверх по подземелью.<br>
+     Держи палец на экране — управляй влево-вправо.<br>
+     Уворачивайся от шипов, пил, пауков и лазеров.<br>
+     Собака «БАТЯ» гонится снизу!</p>
   <button class="btn" id="startBtn">НАЧАТЬ</button>
 </div>
 
@@ -58,19 +71,23 @@
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script>
 // ========================
-// НАСТРОЙКИ
+// БАЗА
 // ========================
-const CW = window.innerWidth;
-const CH = window.innerHeight;
-
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
-canvas.width = CW;
-canvas.height = CH;
+let CW = window.innerWidth;
+let CH = window.innerHeight;
+
+function resize() {
+  CW = canvas.width = window.innerWidth;
+  CH = canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resize);
+resize();
 
 const scoreVal = document.getElementById('scoreVal');
 const coinVal = document.getElementById('coinVal');
-const heartsEl = document.querySelectorAll('.heart');
+const heartsEl = document.querySelectorAll('#hearts span');
 const startScreen = document.getElementById('startScreen');
 const gameOverScreen = document.getElementById('gameOverScreen');
 const finalScore = document.getElementById('finalScore');
@@ -79,114 +96,41 @@ const restartBtn = document.getElementById('restartBtn');
 const pauseBtn = document.getElementById('pauseBtn');
 const hintEl = document.getElementById('hint');
 
-// Если внутри Telegram — раскрыть на весь экран
 try { window.Telegram?.WebApp?.ready(); window.Telegram?.WebApp?.expand(); } catch(e) {}
 
 // ========================
-// СПРАЙТЫ (атласы)
+// СОСТОЯНИЕ ИГРЫ
 // ========================
-const playerImg = new Image();  playerImg.src = 'assets/player.png';
-const enemiesImg = new Image(); enemiesImg.src = 'assets/enemies.png';
-const tilesImg = new Image();   tilesImg.src = 'assets/tiles.png';
-
-let imgsLoaded = 0;
-[playerImg, enemiesImg, tilesImg].forEach(img => {
-  img.onload = () => { imgsLoaded++; };
-  img.onerror = () => { console.warn('Не загрузилось:', img.src); imgsLoaded++; };
-});
-
-// ========================
-// АТЛАСЫ — координаты кадров
-// (подбираются визуально под твои спрайты)
-// ========================
-// Игрок: лист 1024x1024, 6 колонок × 2 строки
-const PLAYER_FRAMES = {
-  // верхняя строка — полёт (кадры 0-1), ходьба (2-5)
-  fly:    [{x:10,  y:30, w:160, h:180}, {x:180, y:30, w:160, h:180}],
-  walkR:  [{x:355, y:30, w:160, h:180}, {x:525, y:30, w:160, h:180}, {x:690, y:30, w:160, h:180}, {x:850, y:30, w:160, h:180}],
-  // нижняя строка — ходьба влево (зеркально)
-  walkL:  [{x:10,  y:250, w:160, h:180}, {x:180, y:250, w:160, h:180}, {x:355, y:250, w:160, h:180}, {x:525, y:250, w:160, h:180}, {x:690, y:250, w:160, h:180}, {x:850, y:250, w:160, h:180}]
-};
-
-// Собака: лист с врагами (нижняя часть). Возьмём средний кадр
-const DOG_FRAME = {x:20, y:700, w:200, h:180};
-const DOG_FRAME2 = {x:230, y:700, w:200, h:180};
-
-// Пауки: лист 2
-const SPIDER_GREEN  = {x:30,  y:30,  w:150, h:130};
-const SPIDER_PURPLE = {x:30,  y:260, w:150, h:130};
-const SPIDER_HANG   = {x:560, y:100, w:120, h:180};
-
-// Пила
-const SAW_BIG   = {x:30,  y:520, w:210, h:210};
-const SAW_SMALL = {x:770, y:800, w:190, h:190};
-
-// Шипы
-const SPIKES_4 = {x:320, y:520, w:250, h:110};
-const SPIKES_7 = {x:320, y:850, w:430, h:110};
-
-// Топор
-const AXE = {x:320, y:660, w:280, h:120};
-
-// Лазер-пушка
-const LASER_OFF = {x:640, y:640, w:130, h:100};
-const LASER_ON  = {x:640, y:740, w:360, h:100};
-
-// Паутина (декор)
-const WEB = {x:830, y:40, w:170, h:170};
-
-// Монета (из tiles.png — верхний левый угол, 6 кадров вращения)
-const COIN_FRAMES = [
-  {x:20,  y:30, w:60, h:60}, {x:95,  y:30, w:60, h:60}, {x:170, y:30, w:60, h:60},
-  {x:245, y:30, w:60, h:60}, {x:320, y:30, w:60, h:60}, {x:395, y:30, w:60, h:60}
-];
-
-// ========================
-// УТИЛИТА: убрать белый фон у спрайта
-// ========================
-function drawSprite(img, frame, dx, dy, dw, dh) {
-  if (!img.complete || !img.naturalWidth) return;
-  // рисуем кадр из атласа на промежуточный canvas, потом убираем белое
-  const tmp = document.createElement('canvas');
-  tmp.width = frame.w; tmp.height = frame.h;
-  const tctx = tmp.getContext('2d');
-  tctx.drawImage(img, frame.x, frame.y, frame.w, frame.h, 0, 0, frame.w, frame.h);
-  // убираем белые пиксели
-  const data = tctx.getImageData(0, 0, frame.w, frame.h);
-  const px = data.data;
-  for (let i = 0; i < px.length; i += 4) {
-    const r = px[i], g = px[i+1], b = px[i+2];
-    if (r > 240 && g > 240 && b > 240) {
-      px[i+3] = 0;
-    }
-  }
-  tctx.putImageData(data, 0, 0);
-  ctx.drawImage(tmp, dx, dy, dw, dh);
-}
-
-// ========================
-// ИГРА
-// ========================
-let player, dog, obstacles, coins, particles;
+let player, dog, obstacles, coins, particles, decor;
 let score, coinsCollected, hearts;
-let speed, gameOver, running, lastTime, baseSpeed = 1.6;
-let fingerX = null;
-let dogTimer = 0;
+let speed, running, gameOver, paused;
+let fingerX = null, fingerActive = false;
+let scrollY = 0;
+let spawnDist = 0, lastTime = 0;
 
 function initGame() {
-  player = { x: CW/2, y: CH - 250, w: 60, h: 70, targetX: CW/2 };
-  dog = { x: CW/2, y: CH + 100, w: 90, h: 80, animFrame: 0 };
+  player = { x: CW/2, y: CH - 250, w: 40 };
+  dog = { x: CW/2, y: CH + 150, animTime: 0 };
   obstacles = [];
   coins = [];
   particles = [];
+  decor = [];
   score = 0;
   coinsCollected = 0;
   hearts = 3;
-  speed = baseSpeed;
-  gameOver = false;
+  speed = 3.2;
   running = true;
-  dogTimer = 0;
+  gameOver = false;
+  paused = false;
   fingerX = null;
+  fingerActive = false;
+  scrollY = 0;
+  spawnDist = 0;
+  lastTime = 0;
+  // декор: паутина на стенах
+  for (let i = 0; i < 6; i++) {
+    decor.push({ x: Math.random() > 0.5 ? 20 : CW - 80, y: Math.random() * CH, side: Math.random() > 0.5 ? 1 : -1 });
+  }
   updateUI();
   requestAnimationFrame(loop);
 }
@@ -194,231 +138,480 @@ function initGame() {
 function updateUI() {
   scoreVal.textContent = Math.floor(score);
   coinVal.textContent = coinsCollected;
-  heartsEl.forEach((h, i) => {
-    h.textContent = i < hearts ? '❤️' : '🖤';
-  });
+  heartsEl.forEach((h, i) => { h.textContent = i < hearts ? '❤️' : '🖤'; });
 }
 
-// Генерация препятствий
+// ========================
+// СПАВН
+// ========================
 function spawnObstacle(y) {
-  const type = Math.random();
-  const x = 60 + Math.random() * (CW - 180);
-  if (type < 0.35) {
-    obstacles.push({ type:'spikes', x, y, w: 80, h: 30, dead:false });
-  } else if (type < 0.6) {
-    obstacles.push({ type:'saw', x, y, w: 60, h: 60, angle:0, dead:false });
-  } else if (type < 0.85) {
-    obstacles.push({ type:'spider', x, y, w: 50, h: 45, dead:false, vx: (Math.random()>0.5?1:-1) });
+  const r = Math.random();
+  const x = 50 + Math.random() * (CW - 140);
+  if (r < 0.30) {
+    obstacles.push({ type:'spikes', x, y, w: 70, h: 26 });
+  } else if (r < 0.55) {
+    obstacles.push({ type:'saw', x, y, w: 55, h: 55, angle: 0 });
+  } else if (r < 0.80) {
+    obstacles.push({ type:'spider', x, y, w: 42, h: 36, vx: Math.random()>0.5 ? 0.6 : -0.6 });
   } else {
-    obstacles.push({ type:'laser', x: 20, y, w: CW - 40, h: 6, timer: Math.random()*Math.PI*2, dead:false });
+    obstacles.push({ type:'laser', x: 20, y, w: CW - 40, h: 5, timer: Math.random()*6.28 });
   }
 }
 
 function spawnCoin(y) {
-  coins.push({ x: 60 + Math.random() * (CW-120), y, w: 30, h: 30, frame: 0 });
+  coins.push({ x: 50 + Math.random()*(CW-100), y, w: 26, h: 26, frame: 0 });
 }
 
-// Цикл
-let lastSpawn = 0;
+// ========================
+// ЦИКЛ
+// ========================
 function loop(t) {
   if (!running) return;
-  const dt = Math.min(40, t - (lastTime || t)); lastTime = t;
+  if (paused) { requestAnimationFrame(loop); return; }
 
-  // ускорение
-  speed += dt * 0.00015;
-  const move = speed * dt * 0.1;
-  score += move * 0.3;
+  if (!lastTime) lastTime = t;
+  let dt = Math.min(50, t - lastTime) / 16.67; // нормализация к 60fps
+  lastTime = t;
 
-  // движение игрока
-  if (fingerX !== null) {
-    player.x += (fingerX - player.x) * 0.15;
-  }
-  player.x = Math.max(30, Math.min(CW-30, player.x));
-  player.y += move * 0.3;
-
-  // собака
-  dogTimer += dt;
-  const dogSpeed = 0.12 + Math.min(0.5, score * 0.0005);
-  dog.y -= move * dogSpeed;
-  dog.animFrame = Math.floor(t / 120) % 2;
-  dog.x += (player.x - dog.x) * 0.02;
-
-  // камера вверх
-  if (player.y < CH * 0.55) {
-    const diff = CH * 0.55 - player.y;
-    player.y = CH * 0.55;
-    dog.y += diff * 0.98;
-    obstacles.forEach(o => o.y += diff);
-    coins.forEach(c => c.y += diff);
-    score += diff * 0.15;
-  }
-
-  // генерация
-  lastSpawn += move;
-  if (lastSpawn > 220) {
-    lastSpawn = 0;
-    spawnObstacle(CH + 80);
-    if (Math.random() < 0.4) spawnCoin(CH - 400);
-  }
-
-  // обработка препятствий
-  obstacles.forEach(o => {
-    if (o.dead) return;
-    if (o.type === 'saw') o.angle += dt * 0.01;
-    if (o.type === 'laser') o.timer += dt * 0.003;
-    if (o.type === 'spider') {
-      o.x += o.vx * 0.5;
-      if (o.x < 30 || o.x > CW-80) o.vx *= -1;
-    }
-    // лазер мигает
-    if (o.type === 'laser') {
-      o.on = Math.sin(o.timer) > 0;
-      if (o.on) {
-        // коллизия
-        if (player.y + 30 > o.y && player.y - 30 < o.y + o.h) {
-          hitPlayer();
-          o.dead = true;
-        }
-      }
-    } else {
-      // обычная коллизия
-      if (Math.abs(player.x - (o.x + o.w/2)) < (o.w/2 + 15) &&
-          Math.abs(player.y - (o.y + o.h/2)) < (o.h/2 + 20)) {
-        hitPlayer();
-        o.dead = true;
-      }
-    }
-  });
-
-  // монеты
-  coins = coins.filter(c => !c.dead);
-  coins.forEach(c => {
-    c.frame = Math.floor(t / 100) % 6;
-    if (Math.abs(player.x - (c.x+15)) < 30 && Math.abs(player.y - (c.y+15)) < 30) {
-      c.dead = true;
-      coinsCollected++;
-      for (let i=0; i<8; i++) {
-        particles.push({ x:c.x, y:c.y, vx:(Math.random()-0.5)*6, vy:(Math.random()-0.5)*6, life:20, color:'#ffd700' });
-      }
-    }
-  });
-
-  // удаление мусора
-  obstacles = obstacles.filter(o => o.y < CH + 200 && !o.dead);
-  coins = coins.filter(c => c.y < CH + 100 && !c.dead);
-
-  // проверка — собака догнала
-  if (dog.y < player.y + 20) {
-    gameOver = true;
-    running = false;
-    finalScore.textContent = Math.floor(score) + ' м';
-    gameOverScreen.classList.remove('hidden');
-    hintEl.classList.add('hidden');
-  }
-
-  // частицы
-  particles = particles.filter(p => p.life > 0);
-  particles.forEach(p => { p.x += p.vx; p.y += p.vy; p.life--; });
-
-  updateUI();
+  update(dt);
   render();
   requestAnimationFrame(loop);
 }
 
+function update(dt) {
+  // ускорение со временем
+  speed += dt * 0.004;
+  const move = speed * dt;
+  scrollY += move;
+  score += move * 0.05;
+
+  // игрок
+  if (fingerActive && fingerX !== null) {
+    player.x += (fingerX - player.x) * 0.18;
+  }
+  player.x = Math.max(35, Math.min(CW-35, player.x));
+
+  // собака
+  dog.animTime += dt;
+  const dogSpeed = speed * (0.55 + Math.min(0.35, score * 0.0004));
+  dog.y -= dogSpeed * dt;
+  dog.x += (player.x - dog.x) * 0.02;
+
+  // камера
+  const camLine = CH * 0.55;
+  if (player.y < camLine) {
+    const diff = camLine - player.y;
+    player.y = camLine;
+    dog.y += diff * 0.96;
+    obstacles.forEach(o => o.y += diff);
+    coins.forEach(c => c.y += diff);
+    decor.forEach(d => { d.y += diff * 0.7; if (d.y > CH + 100) d.y -= CH + 200; });
+    score += diff * 0.08;
+  }
+
+  // генерация
+  spawnDist += move;
+  if (spawnDist > 200) {
+    spawnDist = 0;
+    spawnObstacle(CH + 80);
+    if (Math.random() < 0.45) spawnCoin(CH - 300 - Math.random()*200);
+  }
+
+  // препятствия
+  obstacles.forEach(o => {
+    if (o.type === 'saw') o.angle += dt * 0.15;
+    if (o.type === 'laser') o.timer += dt * 0.06;
+    if (o.type === 'spider') {
+      o.x += o.vx * dt;
+      if (o.x < 35 || o.x + o.w > CW - 35) o.vx *= -1;
+    }
+    // коллизия
+    if (o.type === 'laser') {
+      o.on = Math.sin(o.timer) > 0.1;
+      if (o.on && player.y + 22 > o.y && player.y - 22 < o.y + o.h) {
+        hitPlayer();
+        o.hit = true;
+      }
+    } else {
+      if (Math.abs(player.x - (o.x + o.w/2)) < (o.w/2 + 14) &&
+          Math.abs(player.y - (o.y + o.h/2)) < (o.h/2 + 18)) {
+        hitPlayer();
+        o.hit = true;
+      }
+    }
+  });
+  obstacles = obstacles.filter(o => o.y < CH + 200 && !o.hit);
+
+  // монеты
+  coins.forEach(c => {
+    c.frame += dt * 0.4;
+    if (Math.abs(player.x - (c.x+13)) < 26 && Math.abs(player.y - (c.y+13)) < 26) {
+      c.hit = true;
+      coinsCollected++;
+      for (let i=0; i<10; i++) {
+        particles.push({
+          x: c.x+13, y: c.y+13,
+          vx: (Math.random()-0.5)*7, vy: (Math.random()-0.5)*7,
+          life: 22, color: '#ffd700'
+        });
+      }
+    }
+  });
+  coins = coins.filter(c => c.y < CH + 100 && !c.hit);
+
+  // частицы
+  particles.forEach(p => { p.x += p.vx; p.y += p.vy; p.vy += 0.15; p.life--; });
+  particles = particles.filter(p => p.life > 0);
+
+  // собака догнала
+  if (dog.y < player.y + 25) {
+    endGame();
+  }
+
+  updateUI();
+}
+
 function hitPlayer() {
   hearts--;
-  if (hearts <= 0) {
-    gameOver = true;
-    running = false;
-    finalScore.textContent = Math.floor(score) + ' м';
-    gameOverScreen.classList.remove('hidden');
-    hintEl.classList.add('hidden');
+  for (let i=0; i<14; i++) {
+    particles.push({
+      x: player.x, y: player.y,
+      vx: (Math.random()-0.5)*9, vy: (Math.random()-0.5)*9,
+      life: 25, color: '#ff2244'
+    });
   }
-  // тряска
-  canvas.style.transform = 'translate(' + (Math.random()*10-5) + 'px,' + (Math.random()*10-5) + 'px)';
-  setTimeout(() => canvas.style.transform = '', 100);
+  canvas.style.transform = `translate(${(Math.random()*12-6)}px,${(Math.random()*12-6)}px)`;
+  setTimeout(() => canvas.style.transform = '', 90);
+  if (hearts <= 0) endGame();
+}
+
+function endGame() {
+  gameOver = true;
+  running = false;
+  finalScore.textContent = Math.floor(score) + ' м';
+  gameOverScreen.classList.remove('hidden');
+  hintEl.classList.add('hidden');
 }
 
 // ========================
-// ОТРИСОВКА
+// РИСОВАНИЕ
 // ========================
 function render() {
-  // фон — тёмное подземелье
+  // фон
   const grad = ctx.createLinearGradient(0, 0, 0, CH);
-  grad.addColorStop(0, '#0a0202');
-  grad.addColorStop(1, '#1a0808');
+  grad.addColorStop(0, '#1a0505');
+  grad.addColorStop(0.5, '#2a0a0a');
+  grad.addColorStop(1, '#0a0202');
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, CW, CH);
 
-  // кирпичная текстура (программная, бесшовная)
-  ctx.fillStyle = 'rgba(60,20,15,0.4)';
-  const brickH = 20, brickW = 40;
-  const offset = (score * 6) % brickH;
-  for (let y = -brickH; y < CH + brickH; y += brickH) {
-    for (let x = 0; x < CW; x += brickW) {
-      const bxx = x + ((Math.floor((y+offset)/brickH) % 2) * brickW/2);
-      ctx.fillRect(bxx + 1, y + offset + 1, brickW - 2, brickH - 2);
+  // кирпичи (бесшовно)
+  const brickH = 22, brickW = 46;
+  const off = scrollY % brickH;
+  ctx.fillStyle = 'rgba(70,22,18,0.55)';
+  for (let row = -1; row < Math.ceil(CH / brickH) + 1; row++) {
+    const y = row * brickH + off;
+    const shift = (Math.floor((row + Math.floor(scrollY / brickH))) % 2) * (brickW / 2);
+    for (let x = -brickW; x < CW + brickW; x += brickW) {
+      ctx.fillRect(x + shift + 1, y + 1, brickW - 2, brickH - 2);
     }
   }
-
-  // боковые стены
-  ctx.fillStyle = 'rgba(30,10,5,0.8)';
+  // затемнение по краям
+  ctx.fillStyle = 'rgba(0,0,0,0.35)';
   ctx.fillRect(0, 0, 15, CH);
-  ctx.fillRect(CW-15, 0, 15, CH);
+  ctx.fillRect(CW - 15, 0, 15, CH);
+
+  // паутина
+  ctx.strokeStyle = 'rgba(220,220,220,0.25)';
+  ctx.lineWidth = 1;
+  decor.forEach(d => {
+    const wx = d.x, wy = d.y, s = 30;
+    for (let i = 0; i < 6; i++) {
+      const a = (i / 6) * Math.PI * 2;
+      ctx.beginPath();
+      ctx.moveTo(wx, wy);
+      ctx.lineTo(wx + Math.cos(a) * s, wy + Math.sin(a) * s);
+      ctx.stroke();
+    }
+    for (let r = 10; r < s; r += 10) {
+      ctx.beginPath();
+      ctx.arc(wx, wy, r, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+  });
 
   // препятствия
   obstacles.forEach(o => {
     if (o.type === 'spikes') {
-      drawSprite(enemiesImg, SPIKES_4, o.x, o.y, o.w, o.h);
+      ctx.fillStyle = '#c9c9d4';
+      ctx.strokeStyle = '#444';
+      ctx.lineWidth = 1.5;
+      const n = 5, sw = o.w / n;
+      for (let i = 0; i < n; i++) {
+        ctx.beginPath();
+        ctx.moveTo(o.x + i*sw, o.y + o.h);
+        ctx.lineTo(o.x + i*sw + sw/2, o.y);
+        ctx.lineTo(o.x + i*sw + sw, o.y + o.h);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+      }
+      ctx.fillStyle = '#5a2010';
+      ctx.fillRect(o.x - 3, o.y + o.h - 4, o.w + 6, 8);
     } else if (o.type === 'saw') {
       ctx.save();
       ctx.translate(o.x + o.w/2, o.y + o.h/2);
       ctx.rotate(o.angle);
-      drawSprite(enemiesImg, SAW_BIG, -o.w/2, -o.h/2, o.w, o.h);
+      const r = o.w / 2;
+      ctx.fillStyle = '#555';
+      ctx.beginPath();
+      for (let i = 0; i < 12; i++) {
+        const a1 = (i / 12) * Math.PI * 2;
+        const a2 = ((i + 0.5) / 12) * Math.PI * 2;
+        ctx.lineTo(Math.cos(a1) * r, Math.sin(a1) * r);
+        ctx.lineTo(Math.cos(a2) * r * 0.75, Math.sin(a2) * r * 0.75);
+      }
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = '#888';
+      ctx.beginPath();
+      ctx.arc(0, 0, r * 0.65, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#222';
+      ctx.beginPath();
+      ctx.arc(0, 0, r * 0.2, 0, Math.PI * 2);
+      ctx.fill();
       ctx.restore();
     } else if (o.type === 'spider') {
-      drawSprite(enemiesImg, SPIDER_GREEN, o.x, o.y, o.w, o.h);
+      const cx = o.x + o.w/2, cy = o.y + o.h/2;
+      // лапы
+      ctx.strokeStyle = '#2d7d2d';
+      ctx.lineWidth = 2.5;
+      for (let i = 0; i < 4; i++) {
+        const a = -0.9 + i * 0.6;
+        const dir = i < 2 ? -1 : 1;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(cx + Math.cos(a) * 22 * dir * (dir>0?1:-1) - 20, cy + Math.sin(a) * 16);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(cx + Math.cos(a) * 22 * dir * (dir>0?1:-1) + 20, cy + Math.sin(a) * 16);
+        ctx.stroke();
+      }
+      // тело
+      ctx.fillStyle = '#3a9a3a';
+      ctx.beginPath();
+      ctx.ellipse(cx, cy, 14, 12, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#1a5a1a';
+      ctx.beginPath();
+      ctx.ellipse(cx, cy - 8, 8, 6, 0, 0, Math.PI * 2);
+      ctx.fill();
+      // глаза
+      ctx.fillStyle = '#ff2222';
+      ctx.beginPath();
+      ctx.arc(cx - 5, cy - 6, 2.5, 0, Math.PI * 2);
+      ctx.arc(cx + 5, cy - 6, 2.5, 0, Math.PI * 2);
+      ctx.fill();
     } else if (o.type === 'laser') {
       if (o.on) {
         ctx.save();
         ctx.shadowColor = '#ff0044';
-        ctx.shadowBlur = 15;
+        ctx.shadowBlur = 18;
         ctx.fillStyle = '#ff2244';
         ctx.fillRect(o.x, o.y, o.w, o.h);
-        ctx.fillStyle = '#fff';
+        ctx.fillStyle = '#ffffff';
         ctx.fillRect(o.x, o.y + o.h/2 - 1, o.w, 2);
         ctx.restore();
+      } else {
+        // намек на выключенный лазер
+        ctx.fillStyle = 'rgba(255,0,68,0.15)';
+        ctx.fillRect(o.x, o.y, o.w, o.h);
       }
     }
   });
 
   // монеты
   coins.forEach(c => {
-    const fr = COIN_FRAMES[c.frame];
-    drawSprite(tilesImg, fr, c.x, c.y, c.w, c.h);
+    const cx = c.x + 13, cy = c.y + 13;
+    const scaleX = Math.abs(Math.cos(c.frame));
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.scale(scaleX, 1);
+    ctx.fillStyle = '#ffd700';
+    ctx.shadowColor = '#ffaa00';
+    ctx.shadowBlur = 12;
+    ctx.beginPath();
+    ctx.arc(0, 0, 12, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = '#cc8800';
+    ctx.beginPath();
+    ctx.arc(0, 0, 8, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#ffe080';
+    ctx.fillRect(-1, -5, 2, 10);
+    ctx.restore();
   });
 
   // собака
-  const dogFrame = dog.animFrame === 0 ? DOG_FRAME : DOG_FRAME2;
-  drawSprite(enemiesImg, dogFrame, dog.x - dog.w/2, dog.y - dog.h/2, dog.w, dog.h);
+  drawDog(dog.x, dog.y);
 
   // частицы
   particles.forEach(p => {
-    ctx.globalAlpha = p.life / 20;
+    ctx.globalAlpha = Math.max(0, p.life / 25);
     ctx.fillStyle = p.color;
     ctx.beginPath();
-    ctx.arc(p.x, p.y, 3, 0, Math.PI*2);
+    ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
     ctx.fill();
   });
   ctx.globalAlpha = 1;
 
-  // игрок — кадр полёта с огнём
-  const playerFrame = PLAYER_FRAMES.fly[Math.floor(Date.now()/150) % 2];
-  ctx.save();
-  ctx.shadowColor = '#ffb400';
-  ctx.shadowBlur = 20;
-  drawSprite(playerImg, playerFrame, player.x - player.w/2, player.y - player.h/2, player.w, player.h);
-  ctx.restore();
+  // игрок
+  drawPlayer(player.x, player.y);
+}
+
+function drawPlayer(x, y) {
+  // свечение
+  const g = ctx.createRadialGradient(x, y, 5, x, y, 45);
+  g.addColorStop(0, 'rgba(255,200,50,0.6)');
+  g.addColorStop(1, 'rgba(255,200,50,0)');
+  ctx.fillStyle = g;
+  ctx.fillRect(x - 50, y - 50, 100, 100);
+
+  // тело (куртка)
+  ctx.fillStyle = '#1a1a2e';
+  ctx.beginPath();
+  ctx.roundRect(x - 14, y + 8, 28, 22, 5);
+  ctx.fill();
+  ctx.fillStyle = '#0d0d1a';
+  ctx.beginPath();
+  ctx.roundRect(x - 16, y + 10, 32, 6, 3);
+  ctx.fill();
+
+  // голова (круг с кожей)
+  ctx.fillStyle = '#e8b88a';
+  ctx.beginPath();
+  ctx.arc(x, y - 8, 16, 0, Math.PI * 2);
+  ctx.fill();
+  // волосы
+  ctx.fillStyle = '#4a2c18';
+  ctx.beginPath();
+  ctx.arc(x, y - 12, 16, Math.PI, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(x - 12, y - 10, 8, 0, Math.PI * 2);
+  ctx.arc(x + 12, y - 10, 8, 0, Math.PI * 2);
+  ctx.fill();
+  // глаза
+  ctx.fillStyle = '#000';
+  ctx.beginPath();
+  ctx.arc(x - 5, y - 6, 1.8, 0, Math.PI * 2);
+  ctx.arc(x + 5, y - 6, 1.8, 0, Math.PI * 2);
+  ctx.fill();
+  // улыбка
+  ctx.strokeStyle = '#7a3a1a';
+  ctx.lineWidth = 1.4;
+  ctx.beginPath();
+  ctx.arc(x, y, 4, 0.2 * Math.PI, 0.8 * Math.PI);
+  ctx.stroke();
+
+  // огонь реактивный под ногами
+  const f = Math.random() * 4;
+  ctx.fillStyle = '#ff8800';
+  ctx.beginPath();
+  ctx.moveTo(x - 8, y + 30);
+  ctx.lineTo(x, y + 40 + f);
+  ctx.lineTo(x + 8, y + 30);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = '#ffee44';
+  ctx.beginPath();
+  ctx.moveTo(x - 4, y + 30);
+  ctx.lineTo(x, y + 36 + f * 0.6);
+  ctx.lineTo(x + 4, y + 30);
+  ctx.closePath();
+  ctx.fill();
+}
+
+function drawDog(x, y) {
+  // тень
+  ctx.fillStyle = 'rgba(0,0,0,0.4)';
+  ctx.beginPath();
+  ctx.ellipse(x, y + 22, 38, 8, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // тело
+  ctx.fillStyle = '#3a1a0a';
+  ctx.beginPath();
+  ctx.roundRect(x - 40, y - 20, 80, 40, 12);
+  ctx.fill();
+  ctx.fillStyle = '#2a1005';
+  ctx.beginPath();
+  ctx.roundRect(x - 40, y + 5, 80, 18, 8);
+  ctx.fill();
+
+  // голова
+  ctx.fillStyle = '#3a1a0a';
+  ctx.beginPath();
+  ctx.arc(x - 34, y - 12, 20, 0, Math.PI * 2);
+  ctx.fill();
+  // уши
+  ctx.beginPath();
+  ctx.moveTo(x - 46, y - 28);
+  ctx.lineTo(x - 52, y - 44);
+  ctx.lineTo(x - 38, y - 32);
+  ctx.closePath();
+  ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(x - 26, y - 30);
+  ctx.lineTo(x - 22, y - 46);
+  ctx.lineTo(x - 16, y - 30);
+  ctx.closePath();
+  ctx.fill();
+  // морда
+  ctx.fillStyle = '#5a2a10';
+  ctx.beginPath();
+  ctx.ellipse(x - 42, y - 6, 12, 10, 0, 0, Math.PI * 2);
+  ctx.fill();
+  // глаза
+  ctx.fillStyle = '#ffdd00';
+  ctx.beginPath();
+  ctx.arc(x - 38, y - 16, 3, 0, Math.PI * 2);
+  ctx.arc(x - 26, y - 16, 3, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#000';
+  ctx.beginPath();
+  ctx.arc(x - 38, y - 16, 1.4, 0, Math.PI * 2);
+  ctx.arc(x - 26, y - 16, 1.4, 0, Math.PI * 2);
+  ctx.fill();
+  // клыки
+  ctx.fillStyle = '#fff';
+  ctx.beginPath();
+  ctx.moveTo(x - 48, y - 2);
+  ctx.lineTo(x - 45, y + 6);
+  ctx.lineTo(x - 42, y - 2);
+  ctx.closePath();
+  ctx.moveTo(x - 38, y - 2);
+  ctx.lineTo(x - 35, y + 6);
+  ctx.lineTo(x - 32, y - 2);
+  ctx.closePath();
+  ctx.fill();
+  // лапы
+  ctx.fillStyle = '#2a1005';
+  const legOff = Math.sin(dog.animTime * 0.4) * 3;
+  ctx.fillRect(x - 32, y + 12 + legOff, 10, 12);
+  ctx.fillRect(x - 10, y + 12 - legOff, 10, 12);
+  ctx.fillRect(x + 12, y + 12 + legOff, 10, 12);
+  ctx.fillRect(x + 30, y + 12 - legOff, 10, 12);
+
+  // табличка "БАТЯ"
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 11px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('БАТЯ', x - 5, y - 2);
 }
 
 // ========================
@@ -427,21 +620,24 @@ function render() {
 canvas.addEventListener('touchstart', e => {
   e.preventDefault();
   fingerX = e.touches[0].clientX;
+  fingerActive = true;
   hintEl.classList.add('hidden');
 }, { passive:false });
+
 canvas.addEventListener('touchmove', e => {
   e.preventDefault();
   fingerX = e.touches[0].clientX;
 }, { passive:false });
+
 canvas.addEventListener('touchend', e => {
   e.preventDefault();
+  fingerActive = false;
   fingerX = null;
 }, { passive:false });
 
-// Мышь для теста на ПК
-canvas.addEventListener('mousedown', e => { fingerX = e.clientX; });
-canvas.addEventListener('mousemove', e => { if (fingerX !== null) fingerX = e.clientX; });
-canvas.addEventListener('mouseup', () => { fingerX = null; });
+canvas.addEventListener('mousedown', e => { fingerX = e.clientX; fingerActive = true; });
+canvas.addEventListener('mousemove', e => { if (fingerActive) fingerX = e.clientX; });
+canvas.addEventListener('mouseup', () => { fingerActive = false; fingerX = null; });
 
 startBtn.onclick = () => {
   startScreen.classList.add('hidden');
@@ -454,9 +650,9 @@ restartBtn.onclick = () => {
 };
 
 pauseBtn.onclick = () => {
-  if (running) { running = false; }
-  else { running = true; lastTime = 0; requestAnimationFrame(loop); }
+  paused = !paused;
+  pauseBtn.textContent = paused ? '▶' : '⏸';
 };
 </script>
 </body>
-</html>
+ </html>
